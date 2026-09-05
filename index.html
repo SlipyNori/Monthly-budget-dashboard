@@ -1,0 +1,3094 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Monthly Budget &amp; Bills Tracker</title>
+<link href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;💵&lt;/text&gt;&lt;/svg&gt;" rel="icon"/>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    color: #333;
+    margin: 0;
+  }
+  .app-container {
+    display: grid;
+    grid-template-columns: 330px minmax(620px, 760px) 380px;
+    gap: 20px;
+    width: 100%;
+    max-width: 1530px;
+    align-items: start;
+  }
+  /* Sidebar Styles */
+  .sidebar {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  .sidebar h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #1a73e8;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+  }
+  .saved-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .saved-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+  }
+  .saved-item span {
+    cursor: pointer;
+    flex-grow: 1;
+    font-weight: 500;
+  }
+  .saved-item span:hover {
+    color: #1a73e8;
+  }
+  .delete-btn {
+    background: #dc3545;
+    padding: 4px 8px;
+    font-size: 12px;
+    margin-left: 10px;
+  }
+  .delete-btn:hover { background: #b02a37; }
+
+  .add-income-btn { padding: 6px 10px; font-size: 12px; background: var(--accent); }
+  .income-list { display: grid; gap: 10px; }
+  .income-row { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--panel-soft); }
+  .income-row-grid { display: grid; grid-template-columns: minmax(140px,1.2fr) 150px minmax(110px,.7fr) auto; gap: 8px; align-items: end; }
+  .income-field { display: grid; gap: 5px; }
+  .income-field label { font-size: 11px; color: var(--muted); font-weight: 700; }
+  .income-name, .income-date, .income-amount { width: 100%; }
+  .income-remove { background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 8px 10px; }
+  .income-remove:hover { background: var(--border); }
+  .income-empty { color: var(--muted); font-size: 12px; padding: 4px 0 10px; }
+  @media (max-width: 700px) { .income-row-grid { grid-template-columns: 1fr 1fr; } .income-remove { grid-column: 1 / -1; width: 100%; } }
+
+  /* Main Widget Styles */
+  .widget-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  /* Calendar Styles */
+  .calendar-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  .calendar-header {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 32px 32px;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .calendar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.15;
+    text-align: center;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .calendar-nav {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+  }
+  .today-btn {
+    width: 100%;
+    margin-bottom: 14px;
+    background: #f1f3f4;
+    color: #333;
+  }
+  .today-btn:hover { background: #e3e5e8; }
+  .calendar-weekdays,
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .calendar-weekdays {
+    margin-bottom: 5px;
+  }
+  .calendar-weekdays div {
+    text-align: center;
+    font-size: 12px;
+    color: #777;
+    font-weight: 700;
+    padding: 4px 0;
+  }
+  .calendar-day {
+    min-height: 52px;
+    background: #f8f9fa;
+    border: 1px solid #eceff1;
+    border-radius: 7px;
+    padding: 5px;
+    box-sizing: border-box;
+    position: relative;
+    cursor: default;
+  }
+  .calendar-day.empty {
+    background: transparent;
+    border-color: transparent;
+  }
+  .calendar-day.today {
+    border: 2px solid #1a73e8;
+    padding: 4px;
+  }
+  .calendar-day-number {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .calendar-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-top: 5px;
+  }
+  .calendar-icon {
+    font-size: 16px;
+    line-height: 1;
+    cursor: help;
+  }
+  .calendar-day.has-bill {
+    background: #fff8e1;
+  }
+  .calendar-events {
+    margin-top: 14px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+  }
+  .calendar-events-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  .calendar-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+  }
+  .calendar-event:last-child { border-bottom: 0; }
+  .calendar-event-icon { font-size: 18px; }
+  .calendar-empty {
+    color: #999;
+    font-size: 13px;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h2 {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .remaining-amount {
+    font-size: 36px;
+    font-weight: bold;
+    color: #1a73e8;
+    margin: 8px 0;
+  }
+  .retention-rate {
+    font-size: 14px;
+    color: #34a853;
+    font-weight: 500;
+  }
+  .section { margin-bottom: 24px; }
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-blue { color: #1a73e8; }
+  .title-green { color: #34a853; }
+  .title-orange { color: #f29900; }
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 16px;
+  }
+  .input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+  .input-label { font-weight: 500; }
+  .bill-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .bill-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+  .bill-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .due-label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+  }
+  .due-day-input {
+    width: 76px !important;
+  }
+  .bill-icon-select {
+    width: 70px;
+    padding: 7px 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 18px;
+    box-sizing: border-box;
+  }
+  .bill-item .input-header {
+    gap: 10px;
+  }
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  input[type=range] {
+    flex-grow: 1;
+    margin: 0;
+  }
+  input[type=number], input[type=text] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  .controls-row input[type=number] { width: 100px; }
+  .full-width-input { width: 100%; margin-bottom: 8px; }
+  .add-expense-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .add-expense-row input[type=text] { flex-grow: 1; }
+  .add-expense-row input[type=number] { width: 100px; }
+  button {
+    padding: 8px 12px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover { background: #1557b0; }
+  .remove-btn {
+    background: #dc3545;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .remove-btn:hover { background: #b02a37; }
+  .save-row {
+    display: flex;
+    gap: 10px;
+    background: #f1f3f4;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+  .save-row input { flex-grow: 1; }
+  .save-row button { background: #34a853; }
+  .save-row button:hover { background: #2b8c45; }
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 2px solid #eee;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  
+  @media (max-width: 1350px) {
+    .app-container {
+      grid-template-columns: 350px minmax(0, 1fr);
+    }
+    .dashboard-wrap {
+      grid-column: 1 / -1;
+      width: 100%;
+    }
+    .widget-stage {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .widget { width: 100%; }
+  }
+
+  @media (max-width: 768px) {
+    .app-container {
+      grid-template-columns: 1fr;
+    }
+    .sidebar, .widget-container, .dashboard-wrap { width: 100%; }
+    .dashboard-wrap { grid-column: auto; }
+    .widget-stage { grid-template-columns: 1fr; }
+  }
+
+  :root {
+    --bg: #f8f9fa;
+    --panel: #ffffff;
+    --panel-soft: #f1f3f4;
+    --text: #333333;
+    --muted: #666666;
+    --border: #e4e7eb;
+    --shadow: 0 4px 12px rgba(0,0,0,0.10);
+    --input-bg: #ffffff;
+    --calendar-day: #f8f9fa;
+    --calendar-bill: #fff8e1;
+    --accent: #1a73e8;
+  }
+
+  body,
+  .sidebar,
+  .widget-container,
+  .calendar-container,
+  .calendar-day,
+  .save-row,
+  .today-btn,
+  input[type=number],
+  input[type=text],
+  select,
+  .bill-icon-select {
+    transition:
+      background-color 420ms cubic-bezier(.4,0,.2,1),
+      color 420ms cubic-bezier(.4,0,.2,1),
+      border-color 420ms cubic-bezier(.4,0,.2,1),
+      box-shadow 420ms cubic-bezier(.4,0,.2,1);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+  }
+
+  .sidebar,
+  .widget-container,
+  .calendar-container {
+    background: var(--panel);
+    box-shadow: var(--shadow);
+  }
+
+  .save-row {
+    background: var(--panel-soft);
+  }
+
+  .today-btn {
+    background: var(--panel-soft);
+    color: var(--text);
+  }
+
+  input[type=number],
+  input[type=text],
+  select,
+  .bill-icon-select {
+    background: var(--input-bg);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .calendar-day {
+    background: var(--calendar-day);
+    border-color: var(--border);
+  }
+
+  .calendar-day.has-bill {
+    background: var(--calendar-bill);
+  }
+
+  .calendar-events,
+  .saved-item,
+  .footer {
+    border-color: var(--border);
+  }
+
+  .calendar-weekdays div,
+  .calendar-events-title,
+  .due-label,
+  .header h2 {
+    color: var(--muted);
+  }
+
+  /* Dark mode */
+  body.dark-mode {
+    --bg: #0f1115;
+    --panel: #171a20;
+    --panel-soft: #20242c;
+    --text: #f2f4f7;
+    --muted: #aeb6c2;
+    --border: #303641;
+    --shadow: 0 8px 24px rgba(0,0,0,0.28);
+    --input-bg: #1f232b;
+    --calendar-day: #1b1f27;
+    --calendar-bill: #3a3120;
+    --accent: #6ea8fe;
+  }
+
+  body.dark-mode .saved-item span:hover {
+    color: #8bb8ff;
+  }
+
+  body.dark-mode .today-btn:hover {
+    background: #2a2f38;
+  }
+
+  body.dark-mode .calendar-day.today {
+    border-color: #6ea8fe;
+  }
+
+  body.dark-mode .section-title.title-blue,
+  body.dark-mode .title-blue,
+  body.dark-mode .remaining-amount,
+  body.dark-mode .sidebar h3 {
+    color: #6ea8fe;
+  }
+
+  /* Dark mode switch */
+  .theme-switch-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-bottom: 14px;
+    user-select: none;
+  }
+
+  .theme-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .theme-switch {
+    position: relative;
+    width: 52px;
+    height: 30px;
+    display: inline-block;
+  }
+
+  .theme-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .theme-switch-track {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    border-radius: 999px;
+    background: #d7dce3;
+    transition: background-color 300ms cubic-bezier(.4,0,.2,1);
+  }
+
+  .theme-switch-track::after {
+    content: "";
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+    transition: transform 320ms cubic-bezier(.22,1,.36,1);
+  }
+
+  .theme-switch input:checked + .theme-switch-track {
+    background: #3f78d4;
+  }
+
+  .theme-switch input:checked + .theme-switch-track::after {
+    transform: translateX(22px);
+  }
+
+  .theme-switch input:focus-visible + .theme-switch-track {
+    outline: 2px solid #6ea8fe;
+    outline-offset: 2px;
+  }
+
+  .theme-icon {
+    font-size: 15px;
+    width: 18px;
+    text-align: center;
+  }
+
+  /* Collapsible calendar */
+  .calendar-container {
+    overflow: hidden;
+  }
+
+  .calendar-container.calendar-collapsed {
+    width: 100%;
+  }
+
+  .calendar-container.calendar-collapsed .calendar-body {
+    display: none;
+  }
+
+  .calendar-collapse-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    background: var(--panel-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .calendar-collapse-btn:hover {
+    background: var(--border);
+  }
+
+  /* Keep the full month/year visible instead of truncating it. */
+  .calendar-header h3 {
+    overflow: visible;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  /* More refined sliders */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--border) 0%);
+    outline: none;
+    cursor: pointer;
+    transition: filter 160ms ease, background 120ms linear;
+  }
+
+  input[type=range]:hover {
+    filter: brightness(1.06);
+  }
+
+  input[type=range]:focus-visible {
+    outline: 2px solid #6ea8fe;
+    outline-offset: 4px;
+  }
+
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 7px;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 21px;
+    height: 21px;
+    margin-top: -7px;
+    border: 2px solid var(--panel);
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 2px 7px rgba(0,0,0,0.20);
+    transition: transform 140ms cubic-bezier(.22,1,.36,1), box-shadow 140ms ease;
+  }
+
+  input[type=range]:hover::-webkit-slider-thumb {
+    transform: scale(1.10);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.24);
+  }
+
+  input[type=range]:active::-webkit-slider-thumb {
+    transform: scale(1.18);
+  }
+
+  input[type=range]::-moz-range-track {
+    height: 7px;
+    border-radius: 999px;
+    background: var(--border);
+  }
+
+  input[type=range]::-moz-range-progress {
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--panel);
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 2px 7px rgba(0,0,0,0.20);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .widget-launcher.open .widget-drawer,
+    .widget-launcher.open .widget-add-btn,
+    .music-disc.playing,
+    .music-disc.playing + .music-pulse { animation: none !important; }
+    body,
+    .sidebar,
+    .widget-container,
+    .calendar-container,
+    .calendar-day,
+    .save-row,
+    .today-btn,
+    input[type=number],
+    input[type=text],
+    select,
+    .bill-icon-select,
+    .theme-switch-track,
+    .theme-switch-track::after,
+    input[type=range],
+    input[type=range]::-webkit-slider-thumb {
+      transition: none !important;
+    }
+  }
+
+
+  /* Amount inputs and sliders start at zero for a clean new-sheet baseline. Due-date fields intentionally remain blank until a date is entered. */
+  /* ===== Widget Dashboard ===== */
+  .dashboard-wrap {
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .widget-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .widget-slot {
+    min-width: 0;
+    min-height: 84px;
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    opacity: .72;
+  }
+
+  .widget-slot.slot-target,
+  .widget.slot-target {
+    background: color-mix(in srgb, var(--accent) 10%, var(--panel));
+    border-color: var(--accent);
+    opacity: 1;
+  }
+  .widget.drop-before {
+    box-shadow: inset 0 3px 0 var(--accent), var(--shadow);
+  }
+  .widget.drop-after {
+    box-shadow: inset 0 -3px 0 var(--accent), var(--shadow);
+  }
+
+  .widget {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    min-width: 0;
+    border-radius: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 14px;
+    box-sizing: border-box;
+    will-change: transform;
+    transition:
+      box-shadow 220ms ease,
+      background-color 350ms ease,
+      border-color 350ms ease,
+      transform 240ms cubic-bezier(.22,1,.36,1);
+  }
+
+  .widget.dragging {
+    z-index: 1000;
+    box-shadow: 0 18px 38px rgba(0,0,0,.25);
+    transform: scale(1.015);
+    transition: box-shadow 120ms ease, transform 120ms cubic-bezier(.22,1,.36,1);
+  }
+
+  .widget-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .widget.collapsed .widget-head { margin-bottom: 0; }
+  .widget.collapsed .widget-content { display: none; }
+
+  .widget-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: .2px;
+  }
+
+  .widget-title-icon { font-size: 17px; line-height: 1; }
+  .widget-tools { display: flex; align-items: center; gap: 5px; }
+  .widget-tool-btn {
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    background: var(--panel-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .widget-drag-handle { cursor: grab; touch-action: none; }
+  .widget-drag-handle:active { cursor: grabbing; }
+  .widget-remove { font-size: 14px; }
+
+  /* Widgets are intentionally full-width and stack below the calendar. */
+  .span-3, .span-4, .span-6, .span-8, .span-12 { grid-column: auto; }
+
+  .widget-add-btn.widget-active { opacity: .72; }
+  .widget-add-btn.widget-active::after { content: ' · on'; font-size: 11px; color: var(--accent); }
+
+  /* Clock */
+  .clock-widget {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .clock-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .analog-clock {
+    position: relative;
+    width: min(150px, 58%);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, var(--panel) 0 66%, transparent 67%),
+      conic-gradient(from 0deg, rgba(127,127,127,.15) 0 1deg, transparent 1deg 30deg);
+    border: 5px solid var(--border);
+    box-shadow: inset 0 0 0 1px rgba(127,127,127,.08), 0 8px 18px rgba(0,0,0,.08);
+  }
+
+  .clock-tick {
+    position: absolute;
+    left: 50%;
+    top: 4px;
+    width: 2px;
+    height: 8px;
+    transform-origin: 50% calc((var(--clock-size) / 2) - 4px);
+    background: var(--muted);
+    opacity: .85;
+  }
+
+  .clock-hand {
+    position: absolute;
+    left: 50%;
+    bottom: 50%;
+    transform-origin: 50% 100%;
+    border-radius: 999px;
+    transition: transform 260ms cubic-bezier(.22,1,.36,1);
+  }
+
+  .clock-hour {
+    width: 6px;
+    height: 30%;
+    background: var(--text);
+  }
+
+  .clock-minute {
+    width: 4px;
+    height: 40%;
+    background: var(--accent);
+  }
+
+  .clock-second {
+    width: 2px;
+    height: 43%;
+    background: #ef5350;
+  }
+
+  .clock-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--panel);
+    box-shadow: 0 1px 6px rgba(0,0,0,.18);
+  }
+
+  .clock-digital {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  .clock-digital-inner {
+    margin-top: 70px;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--panel-soft) 92%, transparent);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 800;
+    backdrop-filter: blur(8px);
+  }
+
+  .clock-controls {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .clock-zone {
+    max-width: 100%;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  /* Tips */
+  .tip-widget {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tip-body {
+    flex: 1;
+    display: grid;
+    align-content: center;
+    gap: 8px;
+  }
+
+  .tip-text {
+    font-size: clamp(15px, 1.6vw, 20px);
+    line-height: 1.45;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .tip-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .tip-progress {
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .tip-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    border-radius: inherit;
+    transition: width 250ms linear;
+  }
+
+  /* Widget drawer */
+  .widget-launcher {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 3000;
+  }
+
+  .widget-launcher-btn {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+    font-size: 11px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--panel);
+    transform: scale(1);
+    transition:
+      transform 220ms cubic-bezier(.22,1,.36,1),
+      box-shadow 220ms ease;
+  }
+
+  .widget-launcher-btn:hover {
+    transform: scale(1.18);
+    box-shadow: 0 10px 26px rgba(0,0,0,.28);
+  }
+
+  /* ===== Wallpaper Picker ===== */
+  #wallpaper-launcher {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 5000;
+  }
+
+  .wallpaper-launcher-btn {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 22px rgba(0,0,0,.22);
+    font-size: 12px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--panel);
+    cursor: pointer;
+    transition: transform 220ms cubic-bezier(.22,1,.36,1), box-shadow 220ms ease;
+  }
+
+  .wallpaper-launcher-btn:hover {
+    transform: scale(1.18);
+    box-shadow: 0 10px 26px rgba(0,0,0,.28);
+  }
+
+  .wallpaper-menu {
+    position: absolute;
+    right: 0;
+    bottom: 34px;
+    width: min(280px, calc(100vw - 32px));
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 45px rgba(0,0,0,.23);
+    opacity: 0;
+    transform: translateY(10px) scale(.96);
+    transform-origin: bottom right;
+    pointer-events: none;
+    transition: opacity 240ms ease, transform 300ms cubic-bezier(.22,1,.36,1);
+  }
+
+  #wallpaper-launcher.open .wallpaper-menu {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    animation: wallpaperMenuPop 400ms cubic-bezier(.22,1,.36,1) both;
+  }
+
+  @keyframes wallpaperMenuPop {
+    0% { opacity: 0; transform: translateY(18px) scale(.82) rotate(1deg); filter: blur(4px); }
+    60% { opacity: 1; transform: translateY(-4px) scale(1.02) rotate(-.25deg); filter: blur(0); }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+  }
+
+  .wallpaper-menu h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .wallpaper-menu p {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .wallpaper-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .wallpaper-action {
+    flex: 1;
+    padding: 9px 10px;
+    font-size: 11px;
+  }
+
+  .wallpaper-clear {
+    background: var(--panel-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .wallpaper-clear:hover {
+    background: var(--border);
+  }
+
+  #wallpaper-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    opacity: 1;
+  }
+
+  body.has-wallpaper {
+    background-color: transparent;
+  }
+
+  body.has-wallpaper .app-container {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #wallpaper-launcher.open .wallpaper-menu { animation: none !important; }
+  }
+
+  .widget-drawer {
+    position: absolute;
+    left: 0;
+    bottom: 34px;
+    width: min(320px, calc(100vw - 32px));
+    padding: 12px;
+    border-radius: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 45px rgba(0,0,0,.23);
+    opacity: 0;
+    transform: translateY(10px) scale(.96);
+    transform-origin: bottom left;
+    pointer-events: none;
+    transition:
+      opacity 240ms ease,
+      transform 300ms cubic-bezier(.22,1,.36,1);
+  }
+
+  .widget-launcher.open .widget-drawer {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    animation: widgetInventoryPop 430ms cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes widgetInventoryPop {
+    0% { opacity:0; transform:translateY(20px) scale(.82) rotate(-1deg); filter:blur(4px); }
+    58% { opacity:1; transform:translateY(-5px) scale(1.025) rotate(.35deg); filter:blur(0); }
+    82% { transform:translateY(2px) scale(.995) rotate(0); }
+    100% { opacity:1; transform:translateY(0) scale(1) rotate(0); }
+  }
+  .widget-launcher.open .widget-add-btn { animation: widgetInventoryItem .4s cubic-bezier(.22,1,.36,1) both; }
+  .widget-launcher.open .widget-add-btn:nth-child(2){animation-delay:30ms}.widget-launcher.open .widget-add-btn:nth-child(3){animation-delay:60ms}.widget-launcher.open .widget-add-btn:nth-child(4){animation-delay:90ms}.widget-launcher.open .widget-add-btn:nth-child(5){animation-delay:120ms}.widget-launcher.open .widget-add-btn:nth-child(6){animation-delay:150ms}.widget-launcher.open .widget-add-btn:nth-child(7){animation-delay:180ms}.widget-launcher.open .widget-add-btn:nth-child(8){animation-delay:210ms}.widget-launcher.open .widget-add-btn:nth-child(9){animation-delay:240ms}.widget-launcher.open .widget-add-btn:nth-child(10){animation-delay:270ms}
+  @keyframes widgetInventoryItem { from { opacity:0; transform:translateY(12px) scale(.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+
+  .widget-drawer h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .widget-drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 8px;
+  }
+
+  .widget-add-btn {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+    text-align: left;
+    background: var(--panel-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .widget-add-btn:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--panel-soft));
+  }
+
+  .widget-add-btn.widget-active {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  .widget-add-state {
+    justify-self: end;
+    min-width: 34px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    font-size: 9px;
+    line-height: 1.1;
+    font-weight: 800;
+    text-align: center;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  .widget-add-btn.widget-active .widget-add-state {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  }
+
+  .widget-add-btn > span:nth-child(2) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .widget-add-icon {
+    width: 28px;
+    text-align: center;
+    flex: 0 0 28px;
+  }
+
+  .widget-launcher {
+    z-index: 5000;
+  }
+
+  .widget-add-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .widget-hint {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  /* Placeholder pulse */
+  .widget-slot {
+    animation: slotPulseIn 280ms ease both;
+  }
+
+  @keyframes slotPulseIn {
+    from { opacity: 0; transform: scale(.97); }
+    to { opacity: .72; transform: scale(1); }
+  }
+
+  @media (max-width: 1050px) {
+    .widget-stage {
+      grid-template-columns: repeat(6, minmax(0,1fr));
+    }
+    .span-8, .span-12 { grid-column: span 6; }
+  }
+
+  @media (max-width: 700px) {
+    .widget-stage {
+      grid-template-columns: 1fr;
+      grid-auto-rows: auto;
+    }
+    .widget-slot {
+      grid-column: span 1 !important;
+      min-height: 96px;
+    }
+    .widget {
+      grid-column: span 1 !important;
+      min-height: 180px;
+    }
+  }
+
+</style>
+</head>
+<body><div id="wallpaper-backdrop" aria-hidden="true"></div><div class="app-container"><div class="sidebar">
+<h3>Saved Sheets</h3>
+<ul class="saved-list" id="saved-list">
+<!-- Saved items will load here -->
+</ul>
+<!-- Calendar now stays in the left column, directly under Saved Sheets. -->
+<!-- Calendar for bill due dates -->
+<div class="calendar-container" id="calendar-container">
+<div class="calendar-header">
+<button aria-label="Previous month" class="calendar-nav" onclick="changeCalendarMonth(-1)">‹</button>
+<h3 id="calendar-title">Month Year</h3>
+<button aria-label="Next month" class="calendar-nav" onclick="changeCalendarMonth(1)">›</button>
+<button aria-label="Minimize calendar" class="calendar-collapse-btn" id="calendar-collapse-btn" onclick="toggleCalendar()" title="Minimize calendar">⌃</button>
+</div>
+<div class="calendar-body" id="calendar-body">
+<button class="today-btn" onclick="goToCurrentMonth()">Today</button>
+<div class="calendar-weekdays">
+<div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+</div>
+<div class="calendar-grid" id="calendar-grid"></div>
+<div class="calendar-events">
+<div class="calendar-events-title" id="calendar-events-title">Bills this month</div>
+<div id="calendar-events-list"></div>
+</div>
+</div>
+</div>
+
+
+</div><div class="widget-container">
+<div class="theme-switch-wrap">
+<span aria-hidden="true" class="theme-icon">☀️</span>
+<span class="theme-label">Dark mode</span>
+<label aria-label="Toggle dark mode" class="theme-switch">
+<input id="dark-mode-toggle" onchange="toggleDarkMode(this.checked)" type="checkbox"/>
+<span class="theme-switch-track"></span>
+</label>
+<span aria-hidden="true" class="theme-icon">🌙</span>
+</div>
+<!-- Save Controls -->
+<div class="save-row">
+<input id="save-name-input" placeholder="Month Year (e.g. September 2026)" type="text"/>
+<button onclick="saveSheet()">Save Sheet</button>
+</div>
+<div class="header">
+<h2>Remaining after bills</h2>
+<div class="remaining-amount" id="remaining-display">$0.00</div>
+<div class="retention-rate">Retention rate: <span id="retention-display">0.0%</span></div>
+</div>
+<div class="section" id="income-section">
+<div class="section-title">
+  <span>Income</span>
+  <button type="button" class="add-income-btn" onclick="addIncomeRow()">+ Add Income</button>
+</div>
+<div id="income-list" class="income-list"></div>
+<div id="income-empty" class="income-empty">No income added yet. Add your first income source above.</div>
+<div class="footer" style="margin-top: 0; padding-top: 8px; font-size: 14px;">
+<span>Total Income</span>
+<span id="total-income-display">$0.00</span>
+</div>
+</div>
+<div class="section">
+<div class="section-title title-blue">Fixed Bills</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="🚗" data-bill-id="bill-car" data-bill-name="Car Payment">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">🚗</span>Car Payment</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="Car Payment due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="1000" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-car" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="🛡️" data-bill-id="bill-insurance" data-bill-name="Car Insurance">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">🛡️</span>Car Insurance</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="Car Insurance due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="300" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-insurance" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="🎓" data-bill-id="bill-student" data-bill-name="Student Loan">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">🎓</span>Student Loan</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="Student Loan due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="800" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-student" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="📱" data-bill-id="bill-phone" data-bill-name="Phone Bill">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">📱</span>Phone Bill</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="Phone Bill due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="200" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-phone" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+</div>
+<div class="section">
+<div class="section-title title-green">Variable &amp; Subscriptions</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="⛽" data-bill-id="bill-gas" data-bill-name="Gas">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">⛽</span>Gas</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="Gas due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="400" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-gas" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="💳" data-bill-id="bill-self" data-bill-name="SELF (Credit Builder)">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">💳</span>SELF (Credit Builder)</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="SELF due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="100" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-self" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+<div class="input-group bill-item fixed-bill-item" data-bill-icon="🎵" data-bill-id="bill-spotify" data-bill-name="Spotify">
+<div class="input-header">
+<span class="input-label bill-label"><span class="bill-icon">🎵</span>Spotify</span>
+<div class="bill-options">
+<span class="due-label">Due day</span>
+<input aria-label="Spotify due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+</div>
+</div>
+<div class="controls-row">
+<input class="sync-slider" max="50" min="0" step="0.01" type="range" value="0"/>
+<input class="sync-num bill-amount fixed-bill" id="bill-spotify" min="0" step="0.01" type="number" value="0.00"/>
+</div>
+</div>
+</div>
+<div class="section" id="extra-expenses-section">
+<div class="section-title title-orange">Extra Expenses</div>
+<div class="add-expense-row">
+<input id="new-expense-name" placeholder="Expense Name (e.g. Groceries)" type="text"/>
+<input id="new-expense-amount" min="0" placeholder="0.00" step="0.01" type="number"/>
+<button onclick="addExtraExpenseFromInput()">Add</button>
+</div>
+<div id="dynamic-expenses-container"></div>
+</div>
+<div class="footer">
+<span>Total bills</span>
+<span id="total-bills-display">$0.00</span>
+</div>
+</div><div class="dashboard-wrap" id="dashboard-wrap">
+<div class="widget-stage" id="widget-stage"></div>
+</div></div>
+
+<!-- Main Budget Widget -->
+
+<script>
+  const STORAGE_PREFIX = "budget_tracker_";
+
+
+  /* ===== Widget Dashboard Logic ===== */
+  const WIDGET_STORAGE_KEY = 'budget_widget_layout_v3';
+  const WIDGETS = {
+    clock: {
+      title: 'World Clock',
+      icon: '🕒',
+      span: 4,
+      render: renderClockWidget
+    },
+    tips: {
+      title: 'Financial Tip',
+      icon: '💡',
+      span: 8,
+      render: renderTipWidget
+    },
+    overview: {
+      title: 'Bill Snapshot',
+      icon: '📊',
+      span: 4,
+      render: renderOverviewWidget
+    },
+    upcoming: {
+      title: 'Upcoming Bills',
+      icon: '📅',
+      span: 4,
+      render: renderUpcomingWidget
+    },
+    savings: {
+      title: 'Savings Target',
+      icon: '🎯',
+      span: 4,
+      render: renderSavingsWidget
+    },
+    countdown: {
+      title: 'Next Due',
+      icon: '⏳',
+      span: 4,
+      render: renderCountdownWidget
+    },
+    health: {
+      title: 'Budget Health',
+      icon: '❤️',
+      span: 4,
+      render: renderHealthWidget
+    },
+    payday: {
+      title: 'Payday Countdown',
+      icon: '💰',
+      span: 4,
+      render: renderPaydayWidget
+    },
+    notes: {
+      title: 'Quick Notes',
+      icon: '📝',
+      span: 4,
+      render: renderNotesWidget
+    },
+    snake: {
+      title: 'Snake',
+      icon: '🐍',
+      span: 8,
+      render: renderSnakeWidget
+    },
+    daily: {
+      title: 'Daily Budget',
+      icon: '🗓️',
+      span: 4,
+      render: renderDailyBudgetWidget
+    },
+    progress: {
+      title: 'Month Progress',
+      icon: '📈',
+      span: 4,
+      render: renderMonthProgressWidget
+    },
+    billLoad: {
+      title: 'Bill Load',
+      icon: '🧾',
+      span: 4,
+      render: renderBillLoadWidget
+    },
+    biggestBill: {
+      title: 'Biggest Bill',
+      icon: '🔎',
+      span: 4,
+      render: renderBiggestBillWidget
+    }
+  };
+
+  const defaultWidgets = [
+    { id: 'widget-clock-1', type: 'clock', slot: 0, config: { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone } },
+    { id: 'widget-tips-1', type: 'tips', slot: 1, config: { tipIndex: 0 } }
+  ];
+
+  let widgetState = [];
+  let dragState = null;
+  let tipTimers = {};
+
+  function getWidgetState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(WIDGET_STORAGE_KEY) || 'null');
+      const list = Array.isArray(saved) ? saved : structuredClone(defaultWidgets);
+      const seen = new Set();
+      const clean = list.filter(w => {
+        if (!w || !WIDGETS[w.type] || seen.has(w.type)) return false;
+        seen.add(w.type);
+        if (typeof w.collapsed !== 'boolean') w.collapsed = false;
+        return true;
+      });
+      clean.sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
+      clean.forEach((w, i) => { w.slot = i; });
+      return clean;
+    } catch {
+      return structuredClone(defaultWidgets);
+    }
+  }
+
+  function saveWidgetState() {
+    localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(widgetState));
+  }
+
+  function initWidgets() {
+    widgetState = getWidgetState();
+    saveWidgetState();
+    renderWidgetStage();
+    renderWidgetDrawer();
+    toggleWidgetDrawer(false);
+    applyWidgetPreferenceMotion();
+  }
+
+  function applyWidgetPreferenceMotion() {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.documentElement.dataset.reduceMotion = reduce ? '1' : '0';
+  }
+
+  function getMaxSlots() {
+    return window.innerWidth <= 700 ? 6 : 12;
+  }
+
+  function ensureOpenSlots(minSlots = 4) {
+    const needed = Math.max(minSlots, widgetState.length + 4);
+    const max = Math.min(Math.max(needed, 8), 24);
+    return max;
+  }
+
+  function renderWidgetStage() {
+    const stage = document.getElementById('widget-stage');
+    if (!stage) return;
+    stage.querySelectorAll('.widget').forEach(el => {
+      const old = widgetState.find(w => w.id === el.dataset.widgetId);
+      if (old && typeof old._snakeCleanup === 'function') old._snakeCleanup();
+      if (old && old._clockTimer) clearInterval(old._clockTimer);
+      if (old && tipTimers[old.id]) clearInterval(tipTimers[old.id]);
+    });
+    stage.innerHTML = '';
+
+    // Keep widgets in a simple vertical flow. Their slot is now just their order.
+    const ordered = [...widgetState].sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
+    ordered.forEach((item, index) => {
+      item.slot = index;
+      const def = WIDGETS[item.type];
+      if (def) stage.appendChild(createWidgetElement(item, def));
+    });
+  }
+
+  function createWidgetElement(item, def) {
+    const el = document.createElement('section');
+    el.className = `widget span-${def.span}${item.collapsed ? ' collapsed' : ''}`;
+    el.dataset.widgetId = item.id;
+    el.dataset.slot = String(item.slot);
+
+    el.innerHTML = `
+      <div class="widget-head">
+        <div class="widget-title">
+          <span class="widget-title-icon">${def.icon}</span>
+          <span>${def.title}</span>
+        </div>
+        <div class="widget-tools">
+          <button class="widget-tool-btn widget-drag-handle" title="Drag widget" aria-label="Drag widget">✋</button>
+          <button class="widget-tool-btn widget-collapse" title="${item.collapsed ? 'Expand widget' : 'Collapse widget'}" aria-label="${item.collapsed ? 'Expand widget' : 'Collapse widget'}">${item.collapsed ? '⌄' : '⌃'}</button>
+          <button class="widget-tool-btn widget-remove" title="Remove widget" aria-label="Remove widget">×</button>
+        </div>
+      </div>
+      <div class="widget-content"></div>
+    `;
+
+    const content = el.querySelector('.widget-content');
+    def.render(content, item);
+
+    el.querySelector('.widget-collapse').addEventListener('click', e => {
+      e.stopPropagation();
+      toggleWidgetCollapse(item.id);
+    });
+    el.querySelector('.widget-remove').addEventListener('click', e => {
+      e.stopPropagation();
+      removeWidget(item.id);
+    });
+    const handle = el.querySelector('.widget-drag-handle');
+    enableWidgetDrag(el, handle);
+
+    // The widget itself is also a drag target for swapping.
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!dragState || dragState.widgetId === item.id) return;
+      markDropTarget(el);
+    });
+    el.addEventListener('dragleave', () => clearDropTargets());
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragState || dragState.widgetId === item.id) return;
+      const target = widgetState.find(w => w.id === item.id);
+      if (target) swapWidgetSlots(dragState.widgetId, target.slot);
+    });
+
+    return el;
+  }
+
+  function enableWidgetDrag(widget, handle) {
+    // Pointer based drag so it works with mouse and touch.
+    handle.addEventListener('pointerdown', startWidgetDrag);
+  }
+
+  function startWidgetDrag(e) {
+    const handle = e.currentTarget;
+    const widget = handle.closest('.widget');
+    if (!widget) return;
+
+    e.preventDefault();
+    handle.setPointerCapture?.(e.pointerId);
+
+    const widgetId = widget.dataset.widgetId;
+    dragState = {
+      widgetId,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      widget,
+      moved: false
+    };
+
+    widget.classList.add('dragging');
+    document.addEventListener('pointermove', continueWidgetDrag);
+    document.addEventListener('pointerup', endWidgetDrag, { once: true });
+  }
+
+  function continueWidgetDrag(e) {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+
+    if (Math.hypot(dx, dy) > 5) dragState.moved = true;
+    if (!dragState.moved) return;
+
+    // Keep a subtle lift effect while allowing the flex column to physically
+    // move the other widgets out of the way as the dragged widget crosses them.
+    dragState.widget.style.transform = `translate3d(${dx * 0.08}px, 0, 0) scale(1.015)`;
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const widgetEl = target?.closest('.widget');
+    if (!widgetEl || widgetEl === dragState.widget) return;
+
+    clearDropTargets();
+    document.querySelectorAll('.drop-before,.drop-after').forEach(el => {
+      el.classList.remove('drop-before', 'drop-after');
+    });
+
+    const rect = widgetEl.getBoundingClientRect();
+    const insertAfter = e.clientY >= rect.top + rect.height / 2;
+    widgetEl.classList.add(insertAfter ? 'drop-after' : 'drop-before');
+
+    // Reinsert immediately so the widgets below/above visibly shift while dragging.
+    if (insertAfter) {
+      const next = widgetEl.nextElementSibling;
+      if (next !== dragState.widget) widgetEl.parentNode.insertBefore(dragState.widget, next);
+    } else {
+      if (widgetEl !== dragState.widget.nextElementSibling) {
+        widgetEl.parentNode.insertBefore(dragState.widget, widgetEl);
+      }
+    }
+  }
+
+  function endWidgetDrag(e) {
+    if (!dragState) return;
+    const current = dragState;
+
+    document.removeEventListener('pointermove', continueWidgetDrag);
+    clearDropTargets();
+    document.querySelectorAll('.drop-before,.drop-after').forEach(el => {
+      el.classList.remove('drop-before', 'drop-after');
+    });
+
+    current.widget.classList.remove('dragging');
+    current.widget.style.transform = '';
+
+    if (current.moved) {
+      const stage = document.getElementById('widget-stage');
+      if (stage) {
+        const ids = [...stage.querySelectorAll('.widget')].map(el => el.dataset.widgetId);
+        const byId = new Map(widgetState.map(item => [item.id, item]));
+        widgetState = ids.map(id => byId.get(id)).filter(Boolean);
+        compactWidgetSlots();
+        saveWidgetState();
+      }
+    }
+
+    dragState = null;
+  }
+
+  function markDropTarget(el) {
+    clearDropTargets();
+    el.classList.add('slot-target');
+  }
+
+  function clearDropTargets() {
+    document.querySelectorAll('.slot-target').forEach(el => el.classList.remove('slot-target'));
+  }
+
+  function compactWidgetSlots() {
+    widgetState.sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
+    widgetState.forEach((w, i) => { w.slot = i; });
+  }
+
+  function reorderWidget(widgetId, targetId, insertAfter = false) {
+    const from = widgetState.findIndex(w => w.id === widgetId);
+    const targetIndex = widgetState.findIndex(w => w.id === targetId);
+    if (from < 0 || targetIndex < 0 || from === targetIndex) return;
+    const [moved] = widgetState.splice(from, 1);
+    let insertAt = widgetState.findIndex(w => w.id === targetId);
+    if (insertAfter) insertAt += 1;
+    widgetState.splice(Math.max(0, insertAt), 0, moved);
+    compactWidgetSlots();
+    saveWidgetState();
+    animateWidgetRefresh();
+  }
+
+  function animateWidgetRefresh() {
+    const stage = document.getElementById('widget-stage');
+    if (!stage) return;
+
+    const oldRects = new Map();
+    stage.querySelectorAll('.widget').forEach(el => oldRects.set(el.dataset.widgetId, el.getBoundingClientRect()));
+
+    renderWidgetStage();
+
+    stage.querySelectorAll('.widget').forEach(el => {
+      const old = oldRects.get(el.dataset.widgetId);
+      if (!old) {
+        el.animate(
+          [{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'scale(1)' }],
+          { duration: 260, easing: 'cubic-bezier(.22,1,.36,1)' }
+        );
+        return;
+      }
+
+      const now = el.getBoundingClientRect();
+      const dx = old.left - now.left;
+      const dy = old.top - now.top;
+
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        el.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) scale(.99)` },
+            { transform: 'translate(0,0) scale(1)' }
+          ],
+          { duration: 360, easing: 'cubic-bezier(.22,1,.36,1)' }
+        );
+      }
+    });
+    refreshSliderFills?.();
+  }
+
+  function addWidget(type) {
+    const def = WIDGETS[type];
+    if (!def) return;
+
+    // Inventory buttons act as toggles: one instance maximum per widget type.
+    const existing = widgetState.find(w => w.type === type);
+    if (existing) {
+      removeWidget(existing.id);
+      return;
+    }
+
+    compactWidgetSlots();
+    const id = `widget-${type}-${Date.now()}`;
+    widgetState.push({
+      id,
+      type,
+      slot: widgetState.length,
+      collapsed: false,
+      config: {
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        tipIndex: 0
+      }
+    });
+    saveWidgetState();
+    renderWidgetDrawer();
+    animateWidgetRefresh();
+  }
+
+  function removeWidget(id) {
+    widgetState = widgetState.filter(w => w.id !== id);
+    compactWidgetSlots();
+    saveWidgetState();
+    renderWidgetDrawer();
+    animateWidgetRefresh();
+  }
+
+  function toggleWidgetCollapse(id) {
+    const widget = widgetState.find(w => w.id === id);
+    if (!widget) return;
+    widget.collapsed = !widget.collapsed;
+    saveWidgetState();
+    renderWidgetDrawer();
+    animateWidgetRefresh();
+  }
+
+  function renderWidgetDrawer() {
+    const grid = document.getElementById('widget-drawer-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    Object.entries(WIDGETS).forEach(([type, def]) => {
+      const active = widgetState.some(w => w.type === type);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `widget-add-btn${active ? ' widget-active' : ''}`;
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      button.innerHTML = `
+        <span class="widget-add-icon">${def.icon}</span>
+        <span>${def.title}</span>
+        <span class="widget-add-state">${active ? 'ON' : 'ADD'}</span>
+      `;
+      button.addEventListener('click', () => addWidget(type));
+      grid.appendChild(button);
+    });
+  }
+
+  function toggleWidgetDrawer(force) {
+    const launcher = document.getElementById('widget-launcher');
+    if (!launcher) return;
+    const nextOpen = force === undefined ? !launcher.classList.contains('open') : Boolean(force);
+    launcher.classList.toggle('open', nextOpen);
+    const btn = launcher.querySelector('.widget-launcher-btn');
+    if (btn) {
+      btn.textContent = nextOpen ? '×' : '•';
+      btn.setAttribute('aria-label', nextOpen ? 'Close widget inventory' : 'Open widget inventory');
+      btn.title = nextOpen ? 'Close widgets' : 'Widgets';
+    }
+  }
+
+  // Inventory remains open until its close button is clicked.
+
+  /* ===== Widget: Clock ===== */
+  const CLOCK_ZONES = [
+    ['Local', Intl.DateTimeFormat().resolvedOptions().timeZone],
+    ['Eastern', 'America/New_York'],
+    ['Central', 'America/Chicago'],
+    ['Mountain', 'America/Denver'],
+    ['Pacific', 'America/Los_Angeles'],
+    ['London', 'Europe/London'],
+    ['UTC', 'UTC'],
+    ['Tokyo', 'Asia/Tokyo'],
+    ['Sydney', 'Australia/Sydney']
+  ];
+
+  function renderClockWidget(content, item) {
+    content.innerHTML = `
+      <div class="clock-wrap">
+        <div class="analog-clock">
+          ${Array.from({length: 12}, (_, i) => `<span class="clock-tick" style="transform:translateX(-50%) rotate(${i*30}deg); --clock-size:150px;"></span>`).join('')}
+          <div class="clock-hand clock-hour" data-hand="hour"></div>
+          <div class="clock-hand clock-minute" data-hand="minute"></div>
+          <div class="clock-hand clock-second" data-hand="second"></div>
+          <div class="clock-center"></div>
+          <div class="clock-digital"><div class="clock-digital-inner" data-digital>--:--:--</div></div>
+        </div>
+      </div>
+      <div class="clock-controls">
+        <select class="clock-zone" aria-label="Clock timezone">
+          ${CLOCK_ZONES.map(([label, zone]) => `<option value="${zone}">${label} · ${zone}</option>`).join('')}
+        </select>
+      </div>
+    `;
+
+    const select = content.querySelector('.clock-zone');
+    select.value = item.config?.timezone || CLOCK_ZONES[0][1];
+    select.addEventListener('change', e => {
+      item.config.timezone = e.target.value;
+      saveWidgetState();
+    });
+
+    const tick = () => updateClock(content, select.value);
+    tick();
+    clearInterval(item._clockTimer);
+    item._clockTimer = setInterval(tick, 250);
+  }
+
+  function updateClock(content, timezone) {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      hour12: false
+    }).formatToParts(now).reduce((a, p) => (a[p.type] = p.value, a), {});
+
+    const h = Number(parts.hour) % 24;
+    const m = Number(parts.minute);
+    const s = Number(parts.second);
+
+    content.querySelector('[data-hand="hour"]').style.transform = `rotate(${(h % 12) * 30 + m * .5}deg)`;
+    content.querySelector('[data-hand="minute"]').style.transform = `rotate(${m * 6 + s * .1}deg)`;
+    content.querySelector('[data-hand="second"]').style.transform = `rotate(${s * 6}deg)`;
+    content.querySelector('[data-digital]').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  /* ===== Widget: Financial Tips ===== */
+  const FINANCIAL_TIPS = [
+    'Build a small emergency cushion before aggressively optimizing everything else.',
+    'Automate savings on payday so the plan happens before spending gets a vote.',
+    'Review subscriptions every few months. Quiet recurring charges are still recurring charges.',
+    'Use a realistic food and fuel category. A fantasy budget is just a spreadsheet wearing makeup.',
+    'For irregular bills, divide the yearly total by 12 and set that amount aside each month.',
+    'Keep bill due dates visible and pair them with your paydays to reduce surprise cash-flow gaps.',
+    'When a debt is paid off, redirect that old payment toward savings or the next debt.',
+    'A budget should tell you what your money is doing, not make you feel guilty for being a mammal.',
+    'Leave a little breathing room in your monthly plan. Zero-margin budgets break beautifully.',
+    'Compare recurring expenses annually, not only month to month. Tiny leaks become surprisingly rude totals.'
+  ];
+
+  function renderTipWidget(content, item) {
+    content.innerHTML = `
+      <div class="tip-body">
+        <div class="tip-text" data-tip-text></div>
+        <div class="tip-meta">
+          <span data-tip-index>Tip 1 of ${FINANCIAL_TIPS.length}</span>
+          <span>Changes every 15s</span>
+        </div>
+        <div class="tip-progress"><div class="tip-progress-fill" data-tip-progress></div></div>
+      </div>
+    `;
+
+    const render = () => {
+      const index = item.config?.tipIndex ?? 0;
+      content.querySelector('[data-tip-text]').textContent = FINANCIAL_TIPS[index];
+      content.querySelector('[data-tip-index]').textContent = `Tip ${index + 1} of ${FINANCIAL_TIPS.length}`;
+      content.querySelector('[data-tip-progress]').style.width = '0%';
+
+      const fill = content.querySelector('[data-tip-progress]');
+      requestAnimationFrame(() => {
+        fill.style.transition = 'width 15000ms linear';
+        fill.style.width = '100%';
+      });
+
+      content.querySelector('[data-tip-text]').animate(
+        [{ opacity: .15, transform: 'translateY(5px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)' }
+      );
+    };
+
+    render();
+    clearInterval(tipTimers[item.id]);
+    tipTimers[item.id] = setInterval(() => {
+      item.config.tipIndex = ((item.config.tipIndex || 0) + 1) % FINANCIAL_TIPS.length;
+      saveWidgetState();
+      render();
+    }, 15000);
+  }
+
+  /* ===== Widget: Bill Snapshot ===== */
+  function renderOverviewWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:10px;">
+        <div style="font-size:26px;font-weight:800;" data-over-total>$0.00</div>
+        <div style="font-size:12px;color:var(--muted);">Total monthly bills</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--panel-soft);">
+            <div style="font-size:18px;font-weight:800;" data-over-count>0</div>
+            <div style="font-size:10px;color:var(--muted);">Bills</div>
+          </div>
+          <div style="padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--panel-soft);">
+            <div style="font-size:18px;font-weight:800;" data-over-remaining>$0</div>
+            <div style="font-size:10px;color:var(--muted);">Remaining</div>
+          </div>
+        </div>
+      </div>
+    `;
+    const update = () => {
+      const total = [...document.querySelectorAll('.bill-amount')].reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
+      const income = getTotalIncome();
+      content.querySelector('[data-over-total]').textContent = formatMoney(total);
+      content.querySelector('[data-over-count]').textContent = document.querySelectorAll('.bill-item').length;
+      content.querySelector('[data-over-remaining]').textContent = formatMoney(income - total);
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Upcoming Bills ===== */
+  function renderUpcomingWidget(content) {
+    content.innerHTML = `<div style="display:grid;gap:8px;" data-upcoming-list></div>`;
+    const update = () => {
+      const bills = getBillEntriesForCalendar()
+        .sort((a,b) => a.dueDay - b.dueDay)
+        .slice(0, 4);
+      const list = content.querySelector('[data-upcoming-list]');
+      list.innerHTML = bills.length ? bills.map(b => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--border);border-radius:9px;background:var(--panel-soft);">
+          <span>${b.icon} <strong>${escapeHtml(b.name)}</strong></span>
+          <span style="font-size:12px;color:var(--muted);">Day ${b.dueDay}</span>
+        </div>
+      `).join('') : `<div style="color:var(--muted);font-size:12px;">Add due days to see upcoming bills.</div>`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Savings Target ===== */
+  function renderSavingsWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;">
+        <div style="font-size:12px;color:var(--muted);">Set a target in this widget</div>
+        <input type="number" min="0" step="0.01" value="0" data-save-target>
+        <div style="height:7px;background:var(--border);border-radius:999px;overflow:hidden;">
+          <div data-save-fill style="width:0%;height:100%;background:var(--accent);border-radius:inherit;transition:width 500ms cubic-bezier(.22,1,.36,1);"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
+          <span>Target</span><span data-save-target-label>$1,000.00</span>
+        </div>
+      </div>
+    `;
+    const input = content.querySelector('[data-save-target]');
+    const fill = content.querySelector('[data-save-fill]');
+    const label = content.querySelector('[data-save-target-label]');
+    const update = () => {
+      const target = Math.max(0, parseFloat(input.value) || 0);
+      label.textContent = formatMoney(target);
+      const remaining = Math.max(0, parseFloat(document.getElementById('remaining-display')?.textContent?.replace(/[^0-9.-]/g,'')) || 0);
+      const percent = target ? Math.max(0, Math.min(100, (remaining / target) * 100)) : 0;
+      fill.style.width = `${percent}%`;
+    };
+    input.addEventListener('input', () => {
+      localStorage.setItem(`widget_savings_target_${content.closest('.widget')?.dataset.widgetId}`, input.value);
+      update();
+    });
+    const saved = localStorage.getItem(`widget_savings_target_${content.closest('.widget')?.dataset.widgetId}`);
+    if (saved !== null) input.value = saved;
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Next Due ===== */
+  function renderCountdownWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;">
+        <div style="font-size:13px;color:var(--muted);">Nearest due date</div>
+        <div style="font-size:31px;font-weight:900;" data-next-countdown>--</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;" data-next-name>No due date entered</div>
+      </div>
+    `;
+    const update = () => {
+      const bills = getBillEntriesForCalendar();
+      const now = new Date();
+      const currentDay = now.getDate();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      let nearest = null;
+      bills.forEach(b => {
+        let date = new Date(currentYear, currentMonth, b.dueDay);
+        if (date < new Date(currentYear, currentMonth, currentDay)) {
+          date = new Date(currentYear, currentMonth + 1, b.dueDay);
+        }
+        if (!nearest || date < nearest.date) nearest = {...b, date};
+      });
+
+      if (!nearest) {
+        content.querySelector('[data-next-countdown]').textContent = '--';
+        content.querySelector('[data-next-name]').textContent = 'No due date entered';
+        return;
+      }
+
+      const days = Math.max(0, Math.ceil((nearest.date - now) / 86400000));
+      content.querySelector('[data-next-countdown]').textContent = days === 0 ? 'Today' : `${days} day${days === 1 ? '' : 's'}`;
+      content.querySelector('[data-next-name]').innerHTML = `${nearest.icon} <strong>${escapeHtml(nearest.name)}</strong> · Day ${nearest.dueDay}`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+
+  /* ===== Widget: Budget Health ===== */
+  function renderHealthWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:10px;align-content:center;height:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:8px;">
+          <div><div style="font-size:12px;color:var(--muted);">Money retained this month</div><div style="font-size:30px;font-weight:900;" data-health-rate>0%</div></div>
+          <div style="font-size:26px;" data-health-emoji>🙂</div>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:999px;overflow:hidden;"><div data-health-fill style="height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width 400ms ease;"></div></div>
+        <div style="font-size:11px;color:var(--muted);" data-health-copy>Keep your spending below income.</div>
+      </div>`;
+    const update = () => {
+      const income = getTotalIncome();
+      const remainingText = document.getElementById('remaining-display')?.textContent || '0';
+      const remaining = parseFloat(remainingText.replace(/[^0-9.-]/g,'')) || 0;
+      const rate = income > 0 ? Math.round(Math.max(0, Math.min(100, remaining / income * 100))) : 0;
+      content.querySelector('[data-health-rate]').textContent = `${rate}%`;
+      content.querySelector('[data-health-fill]').style.width = `${rate}%`;
+      const emoji = rate >= 70 ? '🚀' : rate >= 50 ? '🙂' : rate >= 25 ? '😐' : '⚠️';
+      content.querySelector('[data-health-emoji]').textContent = emoji;
+      content.querySelector('[data-health-copy]').textContent = rate >= 70 ? 'Excellent room to save or pay down debt.' : rate >= 50 ? 'Solid position. Keep the momentum.' : rate >= 25 ? 'Watch variable spending this month.' : 'Tight month — protect essentials first.';
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Payday Countdown ===== */
+  function renderPaydayWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;align-content:center;height:100%;">
+        <div style="font-size:12px;color:var(--muted);">Next payday</div>
+        <div style="font-size:31px;font-weight:900;" data-payday-days>--</div>
+        <div style="font-size:12px;" data-payday-label>1st or 15th</div>
+      </div>`;
+    const update = () => {
+      const now = new Date();
+      const dates = [...document.querySelectorAll('.income-row .income-date')]
+        .map(input => input.value)
+        .filter(Boolean)
+        .map(value => new Date(`${value}T00:00:00`))
+        .filter(d => !Number.isNaN(d.getTime()) && d >= new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+      dates.sort((a,b)=>a-b);
+      const next = dates[0];
+      if (!next) {
+        content.querySelector('[data-payday-days]').textContent = '--';
+        content.querySelector('[data-payday-label]').textContent = 'Add an income date';
+        return;
+      }
+      const days = Math.max(0, Math.ceil((next - new Date(now.getFullYear(),now.getMonth(),now.getDate())) / 86400000));
+      const name = [...document.querySelectorAll('.income-row')].find(r => r.querySelector('.income-date')?.value === next.toISOString().slice(0,10))?.querySelector('.income-name')?.value.trim() || 'Income';
+      content.querySelector('[data-payday-days]').textContent = days === 0 ? 'Today' : `${days} day${days === 1 ? '' : 's'}`;
+      content.querySelector('[data-payday-label]').textContent = `${name} · ${next.toLocaleDateString()}`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Quick Notes ===== */
+  function renderNotesWidget(content, item) {
+    const key = `widget_notes_${item.id}`;
+    const saved = localStorage.getItem(key) || '';
+    content.innerHTML = `
+      <textarea data-notes style="width:100%;min-height:115px;resize:vertical;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);box-sizing:border-box;font:inherit;" placeholder="Jot down a reminder, bill note, or goal...">${escapeHtml(saved)}</textarea>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;">Saved automatically on this widget.</div>`;
+    const area = content.querySelector('[data-notes]');
+    area.addEventListener('input', () => localStorage.setItem(key, area.value));
+  }
+
+  /* ===== Widget: Snake ===== */
+  function renderSnakeWidget(content, item) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;align-content:start;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--muted);">Take a tiny break 🎮</span>
+          <span style="font-weight:800;font-size:13px;">Score: <span data-snake-score>0</span></span>
+        </div>
+        <canvas data-snake-canvas width="320" height="160" style="width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:10px;background:var(--panel-soft);"></canvas>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button type="button" data-snake-play>Play Snake</button>
+          <button type="button" data-snake-pause style="background:var(--panel-soft);color:var(--text);border:1px solid var(--border);">Pause</button>
+        </div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">Arrow keys or WASD to move.</div>
+      </div>`;
+    const canvas = content.querySelector('[data-snake-canvas]');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = content.querySelector('[data-snake-score]');
+    const playBtn = content.querySelector('[data-snake-play]');
+    const pauseBtn = content.querySelector('[data-snake-pause]');
+    let snake = [], food = {x: 10, y: 5}, dir = {x: 1, y: 0}, timer = null, running = false, score = 0;
+    const cols = 20, rows = 10, cell = 16;
+    const reset = () => { snake=[{x:5,y:5},{x:4,y:5},{x:3,y:5}]; dir={x:1,y:0}; score=0; scoreEl.textContent='0'; running=false; placeFood(); draw(); };
+    const placeFood = () => { do { food={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}; } while(snake.some(p=>p.x===food.x&&p.y===food.y)); };
+    const draw = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='rgba(127,127,127,.08)';
+      for(let x=0;x<cols;x++) for(let y=0;y<rows;y++) if((x+y)%2===0) ctx.fillRect(x*cell,y*cell,cell,cell);
+      ctx.fillStyle='#ef5350'; ctx.beginPath(); ctx.arc(food.x*cell+8,food.y*cell+8,5,0,Math.PI*2); ctx.fill();
+      snake.forEach((p,i)=>{ ctx.fillStyle=i===0?'#6ea8fe':'#8bb8ff'; ctx.fillRect(p.x*cell+1,p.y*cell+1,cell-2,cell-2); });
+    };
+    const step = () => {
+      if(!running) return;
+      const head = {x:snake[0].x+dir.x, y:snake[0].y+dir.y};
+      if(head.x<0||head.y<0||head.x>=cols||head.y>=rows||snake.some(p=>p.x===head.x&&p.y===head.y)){ running=false; clearInterval(timer); timer=null; return; }
+      snake.unshift(head);
+      if(head.x===food.x&&head.y===food.y){ score++; scoreEl.textContent=String(score); placeFood(); } else snake.pop();
+      draw();
+    };
+    const start = () => { reset(); running=true; clearInterval(timer); timer=setInterval(step,130); };
+    playBtn.addEventListener('click', start);
+    pauseBtn.addEventListener('click', () => { running=false; clearInterval(timer); timer=null; });
+    const keyHandler = e => {
+      if(!document.body.contains(content) || document.activeElement?.tagName==='TEXTAREA') return;
+      const k=e.key.toLowerCase(), map={arrowup:[0,-1],w:[0,-1],arrowdown:[0,1],s:[0,1],arrowleft:[-1,0],a:[-1,0],arrowright:[1,0],d:[1,0]};
+      if(!map[k]) return; e.preventDefault(); const [x,y]=map[k]; if(x===-dir.x&&y===-dir.y) return; dir={x,y};
+    };
+    document.addEventListener('keydown', keyHandler);
+    item._snakeCleanup = () => { clearInterval(timer); document.removeEventListener('keydown', keyHandler); };
+    reset();
+  }
+
+  /* ===== Widget: Daily Budget ===== */
+  function renderDailyBudgetWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;align-content:center;height:100%;">
+        <div style="font-size:12px;color:var(--muted);">Safe daily amount from what's left</div>
+        <div style="font-size:31px;font-weight:900;" data-daily-amount>$0.00</div>
+        <div style="font-size:11px;color:var(--muted);" data-daily-copy>Based on the days left in this month.</div>
+      </div>`;
+    const update = () => {
+      const remainingText = document.getElementById('remaining-display')?.textContent || '$0.00';
+      const remaining = Math.max(0, parseFloat(remainingText.replace(/[^0-9.-]/g,'')) || 0);
+      const now = new Date();
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const daysLeft = Math.max(1, Math.ceil((end - now) / 86400000) + 1);
+      const daily = remaining / daysLeft;
+      content.querySelector('[data-daily-amount]').textContent = formatMoney(daily);
+      content.querySelector('[data-daily-copy]').textContent = `${daysLeft} day${daysLeft === 1 ? '' : 's'} left · ${formatMoney(remaining)} remaining`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Month Progress ===== */
+  function renderMonthProgressWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:9px;align-content:center;height:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:8px;">
+          <div>
+            <div style="font-size:12px;color:var(--muted);">Month progress</div>
+            <div style="font-size:30px;font-weight:900;" data-month-progress>0%</div>
+          </div>
+          <div style="font-size:22px;" data-month-days>0/0</div>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:999px;overflow:hidden;">
+          <div data-month-fill style="height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width 400ms ease;"></div>
+        </div>
+      </div>`;
+    const update = () => {
+      const now = new Date();
+      const day = now.getDate();
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const pct = Math.round((day / daysInMonth) * 100);
+      content.querySelector('[data-month-progress]').textContent = `${pct}%`;
+      content.querySelector('[data-month-days]').textContent = `${day}/${daysInMonth}`;
+      content.querySelector('[data-month-fill]').style.width = `${pct}%`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Bill Load ===== */
+  function renderBillLoadWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:9px;align-content:center;height:100%;">
+        <div style="font-size:12px;color:var(--muted);">Bills compared with income</div>
+        <div style="font-size:31px;font-weight:900;" data-bill-load-rate>0%</div>
+        <div style="height:8px;background:var(--border);border-radius:999px;overflow:hidden;">
+          <div data-bill-load-fill style="height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width 400ms ease;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);" data-bill-load-copy>0 bills · $0.00 total</div>
+      </div>`;
+    const update = () => {
+      const bills = [...document.querySelectorAll('.bill-amount')];
+      const totalBills = bills.reduce((sum, el) => sum + (parseFloat(el.value) || 0), 0);
+      const income = getTotalIncome();
+      const rate = income > 0 ? Math.round(Math.max(0, Math.min(100, totalBills / income * 100))) : 0;
+      content.querySelector('[data-bill-load-rate]').textContent = `${rate}%`;
+      content.querySelector('[data-bill-load-fill]').style.width = `${rate}%`;
+      content.querySelector('[data-bill-load-copy]').textContent = `${bills.length} bill${bills.length === 1 ? '' : 's'} · ${formatMoney(totalBills)} total`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Biggest Bill ===== */
+  function renderBiggestBillWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:7px;align-content:center;height:100%;">
+        <div style="font-size:12px;color:var(--muted);">Largest current bill</div>
+        <div style="font-size:18px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-biggest-name>None yet</div>
+        <div style="font-size:30px;font-weight:900;" data-biggest-amount>$0.00</div>
+        <div style="font-size:11px;color:var(--muted);" data-biggest-copy>Add bill amounts to see your largest one.</div>
+      </div>`;
+    const update = () => {
+      const items = [...document.querySelectorAll('.bill-item')].map(item => ({
+        name: item.dataset.billName || item.dataset.name || item.querySelector('.dynamic-expense-name')?.textContent || 'Bill',
+        amount: parseFloat(item.querySelector('.bill-amount')?.value) || 0
+      }));
+      items.sort((a,b) => b.amount - a.amount);
+      const top = items[0];
+      if (!top || top.amount <= 0) {
+        content.querySelector('[data-biggest-name]').textContent = 'None yet';
+        content.querySelector('[data-biggest-amount]').textContent = '$0.00';
+        content.querySelector('[data-biggest-copy]').textContent = 'Add bill amounts to see your largest one.';
+        return;
+      }
+      content.querySelector('[data-biggest-name]').textContent = top.name;
+      content.querySelector('[data-biggest-amount]').textContent = formatMoney(top.amount);
+      content.querySelector('[data-biggest-copy]').textContent = 'This is the largest bill currently in your plan.';
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  function updateAllWidgets() {
+    document.querySelectorAll('.widget-content').forEach(content => {
+      if (typeof content._widgetUpdate === 'function') content._widgetUpdate();
+    });
+  }
+
+  // Re-render widgets when the browser size crosses responsive breakpoints.
+  let lastWidgetColumns = window.innerWidth <= 700 ? 1 : window.innerWidth <= 1050 ? 6 : 12;
+  window.addEventListener('resize', () => {
+    const cols = window.innerWidth <= 700 ? 1 : window.innerWidth <= 1050 ? 6 : 12;
+    if (cols !== lastWidgetColumns) {
+      lastWidgetColumns = cols;
+      renderWidgetStage();
+    }
+  });
+
+  function toggleDarkMode(enabled) {
+    document.body.classList.toggle('dark-mode', enabled);
+    localStorage.setItem('budget_dark_mode', enabled ? '1' : '0');
+    refreshSliderFills();
+  }
+
+  function loadDarkMode() {
+    const saved = localStorage.getItem('budget_dark_mode');
+    const enabled = saved === '1' || (
+      saved === null &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+    );
+    document.body.classList.toggle('dark-mode', enabled);
+    const toggle = document.getElementById('dark-mode-toggle');
+    if (toggle) toggle.checked = enabled;
+  }
+
+  function toggleCalendar() {
+    const container = document.getElementById('calendar-container');
+    const button = document.getElementById('calendar-collapse-btn');
+    if (!container || !button) return;
+
+    const collapsed = container.classList.toggle('calendar-collapsed');
+    button.textContent = collapsed ? '⌄' : '⌃';
+    button.setAttribute('aria-label', collapsed ? 'Expand calendar' : 'Minimize calendar');
+    button.title = collapsed ? 'Expand calendar' : 'Minimize calendar';
+    localStorage.setItem('budget_calendar_collapsed', collapsed ? '1' : '0');
+  }
+
+  function loadCalendarState() {
+    const collapsed = localStorage.getItem('budget_calendar_collapsed') === '1';
+    const container = document.getElementById('calendar-container');
+    const button = document.getElementById('calendar-collapse-btn');
+    if (container && button && collapsed) {
+      container.classList.add('calendar-collapsed');
+      button.textContent = '⌄';
+      button.setAttribute('aria-label', 'Expand calendar');
+      button.title = 'Expand calendar';
+    }
+  }
+
+  function refreshSliderFills() {
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+      const min = Number(slider.min || 0);
+      const max = Number(slider.max || 100);
+      const value = Number(slider.value || 0);
+      const percent = max > min ? ((value - min) / (max - min)) * 100 : 0;
+      slider.style.background = `linear-gradient(90deg, var(--accent) 0%, var(--accent) ${percent}%, var(--border) ${percent}%, var(--border) 100%)`;
+    });
+  }
+
+  // Initialize current month/year for the save input
+  window.onload = async () => {
+    localStorage.removeItem('budget_spotify_client_id');
+    localStorage.removeItem('budget_spotify_token');
+    sessionStorage.removeItem('budget_spotify_pkce_verifier');
+    sessionStorage.removeItem('budget_spotify_oauth_state');
+    const date = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    document.getElementById('save-name-input').value = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    loadDarkMode();
+    loadCalendarState();
+    loadSidebar();
+    calculateBudget();
+    renderCalendar();
+    scheduleDailyCalendarRefresh();
+    refreshSliderFills();
+    initWidgets();
+    updateIncomeEmptyState();
+    initWallpaperPicker();
+  };
+
+  /* ===== Wallpaper Logic ===== */
+  const WALLPAPER_DB = 'budget_dashboard_wallpaper_db';
+  const WALLPAPER_STORE = 'wallpapers';
+  const WALLPAPER_KEY = 'current';
+
+  function openWallpaperMenu(force) {
+    const launcher = document.getElementById('wallpaper-launcher');
+    if (!launcher) return;
+    const nextOpen = force === undefined ? !launcher.classList.contains('open') : Boolean(force);
+    launcher.classList.toggle('open', nextOpen);
+    const btn = document.getElementById('wallpaper-launcher-btn');
+    if (btn) {
+      btn.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+      btn.setAttribute('aria-label', nextOpen ? 'Close wallpaper picker' : 'Open wallpaper picker');
+    }
+  }
+
+  function wallpaperDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(WALLPAPER_DB, 1);
+      req.onupgradeneeded = () => {
+        if (!req.result.objectStoreNames.contains(WALLPAPER_STORE)) req.result.createObjectStore(WALLPAPER_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function saveWallpaper(blob) {
+    const db = await wallpaperDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(WALLPAPER_STORE, 'readwrite');
+      tx.objectStore(WALLPAPER_STORE).put(blob, WALLPAPER_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }
+
+  async function loadWallpaper() {
+    try {
+      const db = await wallpaperDb();
+      const blob = await new Promise((resolve, reject) => {
+        const tx = db.transaction(WALLPAPER_STORE, 'readonly');
+        const req = tx.objectStore(WALLPAPER_STORE).get(WALLPAPER_KEY);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+      db.close();
+      if (blob) applyWallpaper(blob);
+    } catch (err) {
+      console.warn('Wallpaper could not be loaded:', err);
+    }
+  }
+
+  async function clearWallpaper() {
+    try {
+      const db = await wallpaperDb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(WALLPAPER_STORE, 'readwrite');
+        tx.objectStore(WALLPAPER_STORE).delete(WALLPAPER_KEY);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    } catch (err) {
+      console.warn('Wallpaper could not be cleared:', err);
+    }
+    const backdrop = document.getElementById('wallpaper-backdrop');
+    if (backdrop) {
+      if (backdrop.dataset.url) URL.revokeObjectURL(backdrop.dataset.url);
+      backdrop.style.backgroundImage = '';
+      backdrop.dataset.url = '';
+    }
+    document.body.classList.remove('has-wallpaper');
+  }
+
+  function applyWallpaper(blob) {
+    const backdrop = document.getElementById('wallpaper-backdrop');
+    if (!backdrop || !blob) return;
+    if (backdrop.dataset.url) URL.revokeObjectURL(backdrop.dataset.url);
+    const url = URL.createObjectURL(blob);
+    backdrop.style.backgroundImage = `url("${url}")`;
+    backdrop.dataset.url = url;
+    document.body.classList.add('has-wallpaper');
+  }
+
+  function initWallpaperPicker() {
+    const launcher = document.getElementById('wallpaper-launcher');
+    const launcherBtn = document.getElementById('wallpaper-launcher-btn');
+    const chooseBtn = document.getElementById('wallpaper-choose');
+    const clearBtn = document.getElementById('wallpaper-clear');
+    const fileInput = document.getElementById('wallpaper-file');
+    if (!launcher || !launcherBtn || !chooseBtn || !clearBtn || !fileInput) return;
+
+    launcherBtn.addEventListener('click', () => openWallpaperMenu());
+    chooseBtn.addEventListener('click', () => fileInput.click());
+    clearBtn.addEventListener('click', async () => { await clearWallpaper(); openWallpaperMenu(false); });
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      try {
+        await saveWallpaper(file);
+        applyWallpaper(file);
+        openWallpaperMenu(false);
+      } catch (err) {
+        console.error(err);
+        alert('That image could not be saved as the wallpaper.');
+      } finally {
+        fileInput.value = '';
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!launcher.contains(e.target)) openWallpaperMenu(false);
+    });
+
+    loadWallpaper();
+  }
+
+  // Formatting helper
+  function formatMoney(amount) {
+    return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Core calculation
+  function calculateBudget() {
+    const totalIncome = getTotalIncome();
+    
+    let totalBills = 0;
+    document.querySelectorAll('.bill-amount').forEach(input => {
+      totalBills += parseFloat(input.value) || 0;
+    });
+
+    const remaining = totalIncome - totalBills;
+    const retention = totalIncome > 0 ? (remaining / totalIncome) * 100 : 0;
+
+    document.getElementById('total-income-display').textContent = formatMoney(totalIncome);
+    document.getElementById('remaining-display').textContent = formatMoney(remaining);
+    document.getElementById('total-bills-display').textContent = formatMoney(totalBills);
+    document.getElementById('retention-display').textContent = retention.toFixed(1) + '%';
+    updateAllWidgets();
+  }
+
+  // Attach synchronization logic between a slider and number input
+  function attachSyncEvents(slider, numInput) {
+    slider.addEventListener('input', (e) => {
+      numInput.value = parseFloat(e.target.value).toFixed(2);
+      calculateBudget();
+      renderCalendar();
+      refreshSliderFills();
+    });
+    numInput.addEventListener('input', (e) => {
+      slider.value = parseFloat(e.target.value) || 0;
+      calculateBudget();
+      renderCalendar();
+      refreshSliderFills();
+    });
+  }
+
+  // Attach to static items
+  document.querySelectorAll('.controls-row').forEach(row => {
+    const slider = row.querySelector('.sync-slider');
+    const num = row.querySelector('.sync-num');
+    if (slider && num) attachSyncEvents(slider, num);
+  });
+
+  document.querySelectorAll('input[type="range"]').forEach(slider => {
+    slider.addEventListener('input', refreshSliderFills);
+  });
+
+  document.querySelectorAll('.due-day-input').forEach(el => {
+    el.addEventListener('input', () => { renderCalendar(); updateAllWidgets(); });
+  });
+
+  let calendarDate = new Date();
+  calendarDate.setDate(1);
+
+  function getBillEntriesForCalendar() {
+    const bills = [];
+    document.querySelectorAll('.bill-item').forEach(item => {
+      const dueInput = item.querySelector('.due-day-input');
+      if (!dueInput) return;
+
+      const dueDay = parseInt(dueInput.value, 10);
+      if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) return;
+
+      const icon = item.dataset.billIcon || item.querySelector('.bill-icon')?.textContent || "💰";
+      const name = item.dataset.billName || item.dataset.name || "Bill";
+      const amount = parseFloat(item.querySelector('.bill-amount')?.value) || 0;
+
+      bills.push({ name, icon, dueDay, amount });
+    });
+    return bills;
+  }
+
+  function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const title = document.getElementById('calendar-title');
+    const eventsTitle = document.getElementById('calendar-events-title');
+    const eventsList = document.getElementById('calendar-events-list');
+
+    if (!grid || !title || !eventsList) return;
+
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const monthName = calendarDate.toLocaleString('en-US', { month: 'long' });
+    title.textContent = `${monthName} ${year}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+
+    const bills = getBillEntriesForCalendar();
+    const billsByDay = {};
+    bills.forEach(bill => {
+      if (bill.dueDay <= daysInMonth) {
+        (billsByDay[bill.dueDay] ||= []).push(bill);
+      }
+    });
+
+    grid.innerHTML = '';
+
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'calendar-day empty';
+      grid.appendChild(empty);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const cell = document.createElement('div');
+      cell.className = 'calendar-day';
+
+      if (
+        today.getFullYear() === year &&
+        today.getMonth() === month &&
+        today.getDate() === day
+      ) {
+        cell.classList.add('today');
+      }
+
+      const dayBills = billsByDay[day] || [];
+      if (dayBills.length) {
+        cell.classList.add('has-bill');
+        cell.title = dayBills.map(bill => `${bill.name} ${formatMoney(bill.amount)}`).join('\n');
+      }
+
+      const number = document.createElement('div');
+      number.className = 'calendar-day-number';
+      number.textContent = day;
+      cell.appendChild(number);
+
+      const icons = document.createElement('div');
+      icons.className = 'calendar-icons';
+
+      dayBills.forEach(bill => {
+        const icon = document.createElement('span');
+        icon.className = 'calendar-icon';
+        icon.textContent = bill.icon;
+        icon.title = `${bill.name} due ${monthName} ${day}`;
+        icons.appendChild(icon);
+      });
+
+      cell.appendChild(icons);
+      grid.appendChild(cell);
+    }
+
+    eventsTitle.textContent = `Bills due in ${monthName}`;
+
+    const sortedBills = bills
+      .filter(bill => bill.dueDay <= daysInMonth)
+      .sort((a, b) => a.dueDay - b.dueDay || a.name.localeCompare(b.name));
+
+    eventsList.innerHTML = '';
+
+    if (!sortedBills.length) {
+      const empty = document.createElement('div');
+      empty.className = 'calendar-empty';
+      empty.textContent = 'No due dates entered for this month.';
+      eventsList.appendChild(empty);
+      return;
+    }
+
+    sortedBills.forEach(bill => {
+      const event = document.createElement('div');
+      event.className = 'calendar-event';
+      event.innerHTML = `
+        <span class="calendar-event-icon">${bill.icon}</span>
+        <span><strong>${escapeHtml(bill.name)}</strong><br>Due on the ${bill.dueDay}${getOrdinal(bill.dueDay)}${bill.amount ? ` · ${formatMoney(bill.amount)}` : ''}</span>
+      `;
+      eventsList.appendChild(event);
+    });
+  }
+
+  function getOrdinal(number) {
+    const mod100 = number % 100;
+    if (mod100 >= 11 && mod100 <= 13) return "th";
+    switch (number % 10) {
+      case 1: return "st";
+      case 2: return "nd";
+      case 3: return "rd";
+      default: return "th";
+    }
+  }
+
+  function changeCalendarMonth(offset) {
+    calendarDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + offset, 1);
+    renderCalendar();
+  }
+
+  function goToCurrentMonth() {
+    const now = new Date();
+    calendarDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    renderCalendar();
+  }
+
+  function scheduleDailyCalendarRefresh() {
+    const now = new Date();
+    const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1, 0);
+    const delay = Math.max(1000, nextDay.getTime() - now.getTime());
+    setTimeout(() => {
+      const current = new Date();
+      calendarDate = new Date(current.getFullYear(), current.getMonth(), 1);
+      renderCalendar();
+      scheduleDailyCalendarRefresh();
+    }, delay);
+  }
+
+  // --- Custom Income Logic ---
+  function getIncomeRowsData() {
+    return [...document.querySelectorAll('.income-row')].map(row => ({
+      name: row.querySelector('.income-name')?.value.trim() || '',
+      date: row.querySelector('.income-date')?.value || '',
+      amount: parseFloat(row.querySelector('.income-amount')?.value) || 0
+    }));
+  }
+
+  function getTotalIncome() {
+    return [...document.querySelectorAll('.income-row .income-amount')]
+      .reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+  }
+
+  function addIncomeRow(data = {}) {
+    const list = document.getElementById('income-list');
+    const empty = document.getElementById('income-empty');
+    if (!list) return;
+
+    const row = document.createElement('div');
+    row.className = 'income-row';
+    row.innerHTML = `
+      <div class="income-row-grid">
+        <div class="income-field">
+          <label>Income name</label>
+          <input type="text" class="income-name" placeholder="e.g. Main Job" value="${escapeHtml(data.name || '')}">
+        </div>
+        <div class="income-field">
+          <label>Date</label>
+          <input type="date" class="income-date" value="${escapeHtml(data.date || '')}">
+        </div>
+        <div class="income-field">
+          <label>Amount</label>
+          <input type="number" class="income-amount" min="0" step="0.01" value="${Number(data.amount || 0).toFixed(2)}">
+        </div>
+        <button type="button" class="income-remove">Remove</button>
+      </div>`;
+
+    const refresh = () => { calculateBudget(); renderCalendar(); updateAllWidgets(); };
+    row.querySelectorAll('input').forEach(input => input.addEventListener('input', refresh));
+    row.querySelector('.income-remove').addEventListener('click', () => {
+      row.remove();
+      updateIncomeEmptyState();
+      refresh();
+    });
+
+    list.appendChild(row);
+    updateIncomeEmptyState();
+    refreshSliderFills();
+    return row;
+  }
+
+  function updateIncomeEmptyState() {
+    const list = document.getElementById('income-list');
+    const empty = document.getElementById('income-empty');
+    if (list && empty) empty.style.display = list.children.length ? 'none' : 'block';
+  }
+
+  function clearIncomeRows() {
+    const list = document.getElementById('income-list');
+    if (list) list.innerHTML = '';
+    updateIncomeEmptyState();
+  }
+
+  function legacyIncomeRows(data) {
+    const rows = [];
+    if (data && data.income1 !== undefined) rows.push({ name: 'Income 1', date: '', amount: parseFloat(data.income1) || 0 });
+    if (data && data.income2 !== undefined) rows.push({ name: 'Income 2', date: '', amount: parseFloat(data.income2) || 0 });
+    return rows;
+  }
+
+  function loadIncomeRows(rows) {
+    clearIncomeRows();
+    (Array.isArray(rows) ? rows : []).forEach(row => addIncomeRow(row));
+    updateIncomeEmptyState();
+    if (!rows || !rows.length) calculateBudget();
+  }
+
+  // Dynamic Expenses functions
+  function addExtraExpenseFromInput() {
+    const nameInput = document.getElementById('new-expense-name');
+    const amountInput = document.getElementById('new-expense-amount');
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amountInput.value) || 0;
+
+    if (!name) return alert("Please enter an expense name.");
+    
+    createExtraExpenseUI(name, amount);
+    
+    nameInput.value = '';
+    amountInput.value = '';
+    calculateBudget();
+  }
+
+  function createExtraExpenseUI(name, amount, dueDay = "", icon = "💰") {
+    const container = document.getElementById('dynamic-expenses-container');
+    const sliderMax = Math.max(1000, amount * 2);
+
+    const expenseDiv = document.createElement('div');
+    expenseDiv.className = 'input-group dynamic-expense-item bill-item';
+    expenseDiv.dataset.name = name;
+    expenseDiv.dataset.billName = name;
+    expenseDiv.dataset.billIcon = icon;
+    expenseDiv.innerHTML = `
+      <div class="input-header">
+        <span class="input-label bill-label"><span class="bill-icon">${icon}</span><span class="dynamic-expense-name"></span></span>
+        <div class="bill-options">
+          <select class="bill-icon-select" aria-label="${escapeHtml(name)} icon">
+            ${getIconOptions(icon)}
+          </select>
+          <span class="due-label">Due day</span>
+          <input type="number" class="due-day-input" min="1" max="31" placeholder="1-31" value="${dueDay}" aria-label="${escapeHtml(name)} due day">
+          <button class="remove-btn" onclick="this.closest('.input-group').remove(); calculateBudget(); renderCalendar();">Remove</button>
+        </div>
+      </div>
+      <div class="controls-row">
+        <input type="range" class="sync-slider" min="0" max="${sliderMax}" step="0.01" value="${amount.toFixed(2)}">
+        <input type="number" class="sync-num bill-amount extra-bill" min="0" step="0.01" value="${amount.toFixed(2)}">
+      </div>
+    `;
+
+    expenseDiv.querySelector('.dynamic-expense-name').textContent = name;
+    container.appendChild(expenseDiv);
+
+    const newSlider = expenseDiv.querySelector('.sync-slider');
+    const newNum = expenseDiv.querySelector('.sync-num');
+    attachSyncEvents(newSlider, newNum);
+    refreshSliderFills();
+
+    expenseDiv.querySelector('.due-day-input').addEventListener('input', () => { renderCalendar(); updateAllWidgets(); });
+    expenseDiv.querySelector('.bill-icon-select').addEventListener('change', (e) => {
+      expenseDiv.dataset.billIcon = e.target.value;
+      expenseDiv.querySelector('.bill-icon').textContent = e.target.value;
+      renderCalendar();
+      updateAllWidgets();
+    });
+  }
+
+  function getIconOptions(selected = "💰") {
+    const icons = ["💰", "🏠", "🏢", "🚗", "🛡️", "🎓", "📱", "⛽", "💳", "🎵", "🛒", "🛍️", "🍔", "🍕", "☕", "💡", "📺", "🌐", "🏥", "💵", "🧾", "🔧", "🛠️", "✈️", "🚆", "🚌", "⛽", "🐶", "🐱", "👶", "🎮", "🏋️", "💊", "🧹", "💇", "📚", "🎁", "🎬", "📦", "📬", "⚡", "💧", "🔥", "❄️", "📈", "💸", "🏦", "🪙", "🔑", "📌", "❤️", "⭐"];
+    return icons.map(icon => `<option value="${icon}" ${icon === selected ? "selected" : ""}>${icon}</option>`).join("");
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // --- Save / Load Logic ---
+  function saveSheet() {
+    const saveName = document.getElementById('save-name-input').value.trim();
+    if (!saveName) return alert("Please enter a Month/Year to save.");
+
+    const data = {
+      incomes: getIncomeRowsData(),
+      fixedBills: {},
+      extraBills: []
+    };
+
+    // Save Fixed Bills, including due day and icon.
+    document.querySelectorAll('.fixed-bill-item').forEach(el => {
+      const amountEl = el.querySelector('.fixed-bill');
+      const dueEl = el.querySelector('.due-day-input');
+      data.fixedBills[el.dataset.billId] = {
+        amount: amountEl.value,
+        dueDay: dueEl.value || "",
+        icon: el.dataset.billIcon || el.querySelector('.bill-icon')?.textContent || "💰"
+      };
+    });
+
+    // Save Extra Expenses, including due day and icon.
+    document.querySelectorAll('.dynamic-expense-item').forEach(el => {
+      data.extraBills.push({
+        name: el.dataset.name,
+        amount: parseFloat(el.querySelector('.extra-bill').value) || 0,
+        dueDay: el.querySelector('.due-day-input')?.value || "",
+        icon: el.dataset.billIcon || "💰"
+      });
+    });
+
+    localStorage.setItem(STORAGE_PREFIX + saveName, JSON.stringify(data));
+    loadSidebar();
+  }
+
+  function loadSheet(saveName) {
+    const rawData = localStorage.getItem(STORAGE_PREFIX + saveName);
+    if (!rawData) return;
+
+    const data = JSON.parse(rawData);
+
+    document.getElementById('save-name-input').value = saveName;
+
+    loadIncomeRows(data.incomes || legacyIncomeRows(data));
+
+    // Load Fixed Bills. Old saved sheets that only stored a number remain compatible.
+    for (const [id, savedValue] of Object.entries(data.fixedBills || {})) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+
+      const amount = typeof savedValue === "object" ? savedValue.amount : savedValue;
+      const dueDay = typeof savedValue === "object" ? (savedValue.dueDay || "") : "";
+      const icon = typeof savedValue === "object" ? (savedValue.icon || "") : "";
+
+      el.value = parseFloat(amount).toFixed(2);
+
+      const slider = el.previousElementSibling;
+      if (slider && slider.classList.contains('sync-slider')) {
+        slider.value = el.value;
+      }
+
+      const billItem = el.closest('.fixed-bill-item');
+      if (billItem) {
+        const dueEl = billItem.querySelector('.due-day-input');
+        if (dueEl) dueEl.value = dueDay;
+
+        if (icon) {
+          billItem.dataset.billIcon = icon;
+          const iconEl = billItem.querySelector('.bill-icon');
+          if (iconEl) iconEl.textContent = icon;
+        }
+      }
+    }
+
+    const container = document.getElementById('dynamic-expenses-container');
+    container.innerHTML = '';
+    (data.extraBills || []).forEach(item => {
+      createExtraExpenseUI(item.name, item.amount, item.dueDay || "", item.icon || "💰");
+    });
+
+    calculateBudget();
+    renderCalendar();
+    updateAllWidgets();
+  }
+
+  function deleteSheet(saveName, event) {
+    event.stopPropagation(); // Prevent loading when clicking delete
+    if(confirm(`Are you sure you want to delete the sheet for ${saveName}?`)) {
+      localStorage.removeItem(STORAGE_PREFIX + saveName);
+      loadSidebar();
+    }
+  }
+
+  function loadSidebar() {
+    const list = document.getElementById('saved-list');
+    list.innerHTML = '';
+    
+    const savedKeys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith(STORAGE_PREFIX)) {
+        savedKeys.push(key.replace(STORAGE_PREFIX, ''));
+      }
+    }
+
+    // Sort alphabetically/chronologically assuming standard text formats
+    savedKeys.sort();
+
+    if (savedKeys.length === 0) {
+      list.innerHTML = '<li class="saved-item"><span style="color:#999; cursor:default;">No saved sheets yet.</span></li>';
+      return;
+    }
+
+    savedKeys.forEach(saveName => {
+      const li = document.createElement('li');
+      li.className = 'saved-item';
+      li.innerHTML = `
+        <span onclick="loadSheet('${saveName}')">📄 ${saveName}</span>
+        <button class="delete-btn" onclick="deleteSheet('${saveName}', event)">X</button>
+      `;
+      list.appendChild(li);
+    });
+  }
+</script>
+<div class="widget-launcher" id="widget-launcher">
+<div class="widget-drawer" id="widget-drawer">
+<h4>Add a widget</h4>
+<div class="widget-drawer-grid" id="widget-drawer-grid"></div>
+<div class="widget-hint">Click a widget to add or remove it. Each type can appear only once. The inventory stays open until you close it. Drag the hand to reorder widgets.</div>
+</div>
+<button aria-label="Open widget holder" class="widget-launcher-btn" onclick="toggleWidgetDrawer()" title="Widgets">•</button>
+</div>
+
+<div id="wallpaper-launcher">
+  <div class="wallpaper-menu" id="wallpaper-menu" role="dialog" aria-label="Wallpaper settings">
+    <h4>Wallpaper</h4>
+    <p>Choose an image from your computer. It stays behind the dashboard panels.</p>
+    <div class="wallpaper-actions">
+      <button type="button" class="wallpaper-action" id="wallpaper-choose">🖼️ Choose Image</button>
+      <button type="button" class="wallpaper-action wallpaper-clear" id="wallpaper-clear">Clear</button>
+    </div>
+    <input id="wallpaper-file" type="file" accept="image/*" hidden>
+  </div>
+  <button type="button" class="wallpaper-launcher-btn" id="wallpaper-launcher-btn" aria-label="Open wallpaper picker" title="Wallpaper">🖼️</button>
+</div>
+</body>
+</html>
