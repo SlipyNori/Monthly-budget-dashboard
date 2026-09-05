@@ -88,7 +88,10 @@
   .bill-list .bill-options { flex-wrap: wrap; justify-content: flex-end; }
   .bill-list .remove-btn { margin-left: 2px; }
   .bill-help { color: var(--muted); font-size: 11px; margin-top: -4px; margin-bottom: 6px; }
-  @media (max-width: 700px) { .editable-bill-name { width: 100%; } .bill-list .input-header { align-items: flex-start; flex-direction: column; } .bill-list .bill-options { justify-content: flex-start; } }
+  @media (max-width: 700px) {
+    .theme-switch-wrap { align-items:flex-start; }
+    .language-wrap { flex-wrap:wrap; }
+    .language-select { min-width:118px; } .editable-bill-name { width: 100%; } .bill-list .input-header { align-items: flex-start; flex-direction: column; } .bill-list .bill-options { justify-content: flex-start; } }
   @media (max-width: 700px) { .income-row-grid { grid-template-columns: 1fr 1fr; } .income-remove { grid-column: 1 / -1; width: 100%; } }
 
   /* Main Widget Styles */
@@ -513,15 +516,25 @@
     color: #6ea8fe;
   }
 
-  /* Dark mode switch */
+  /* Language + dark mode settings */
   .theme-switch-wrap {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 9px;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 14px;
     user-select: none;
   }
+  .language-wrap, .theme-controls { display:flex; align-items:center; gap:8px; }
+  .language-wrap { min-width:0; }
+  .language-icon { font-size:16px; }
+  .language-label { font-size:13px; font-weight:700; color:var(--muted); white-space:nowrap; }
+  .language-select {
+    height:36px; min-width:132px; padding:0 10px; border-radius:9px;
+    border:1px solid var(--border); background:var(--input-bg); color:var(--text);
+    font:inherit; font-size:13px; font-weight:700; outline:none; cursor:pointer;
+  }
+  .language-select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(110,168,254,.15); }
 
   .theme-label {
     font-size: 13px;
@@ -1227,6 +1240,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.15;
+  }
+  .widget-add-btn:hover > .widget-add-name,
+  .widget-add-btn:focus-visible > .widget-add-name {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
   }
 
   .widget-add-icon {
@@ -1286,7 +1306,7 @@
 </style>
 </head>
 <body><div id="wallpaper-backdrop" aria-hidden="true"></div><div class="app-container"><div class="sidebar">
-<h3>Saved Sheets</h3>
+<h3 data-i18n="savedSheets">Saved Sheets</h3>
 <ul class="saved-list" id="saved-list">
 <!-- Saved items will load here -->
 </ul>
@@ -1300,13 +1320,13 @@
 <button aria-label="Minimize calendar" class="calendar-collapse-btn" id="calendar-collapse-btn" onclick="toggleCalendar()" title="Minimize calendar">⌃</button>
 </div>
 <div class="calendar-body" id="calendar-body">
-<button class="today-btn" onclick="goToCurrentMonth()">Today</button>
+<button class="today-btn" onclick="goToCurrentMonth()" data-i18n="today">Today</button>
 <div class="calendar-weekdays">
-<div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+<div data-weekday="0">Sun</div><div data-weekday="1">Mon</div><div data-weekday="2">Tue</div><div data-weekday="3">Wed</div><div data-weekday="4">Thu</div><div data-weekday="5">Fri</div><div data-weekday="6">Sat</div>
 </div>
 <div class="calendar-grid" id="calendar-grid"></div>
 <div class="calendar-events">
-<div class="calendar-events-title" id="calendar-events-title">Bills this month</div>
+<div class="calendar-events-title" id="calendar-events-title" data-i18n="billsThisMonth">Bills this month</div>
 <div id="calendar-events-list"></div>
 </div>
 </div>
@@ -1315,63 +1335,74 @@
 
 </div><div class="widget-container">
 <div class="theme-switch-wrap">
-<span aria-hidden="true" class="theme-icon">☀️</span>
-<span class="theme-label">Dark mode</span>
-<label aria-label="Toggle dark mode" class="theme-switch">
-<input id="dark-mode-toggle" onchange="toggleDarkMode(this.checked)" type="checkbox"/>
-<span class="theme-switch-track"></span>
-</label>
-<span aria-hidden="true" class="theme-icon">🌙</span>
+<div class="language-wrap">
+  <span class="language-icon" aria-hidden="true">🌐</span>
+  <label class="language-label" for="language-select" data-i18n="language">Language</label>
+  <select id="language-select" class="language-select" aria-label="Language" onchange="setLanguage(this.value)">
+    <option value="en">English</option>
+    <option value="zh">简体中文</option>
+    <option value="es">Español</option>
+  </select>
+</div>
+<div class="theme-controls">
+  <span aria-hidden="true" class="theme-icon">☀️</span>
+  <span class="theme-label" data-i18n="darkMode">Dark mode</span>
+  <label aria-label="Toggle dark mode" class="theme-switch" data-i18n-aria="toggleDarkMode">
+    <input id="dark-mode-toggle" onchange="toggleDarkMode(this.checked)" type="checkbox"/>
+    <span class="theme-switch-track"></span>
+  </label>
+  <span aria-hidden="true" class="theme-icon">🌙</span>
+</div>
 </div>
 <!-- Save Controls -->
 <div class="save-row">
-<input id="save-name-input" placeholder="Month Year (e.g. September 2026)" type="text"/>
-<button onclick="saveSheet()">Save Sheet</button>
+<input id="save-name-input" placeholder="Month Year (e.g. September 2026)" data-i18n-placeholder="savePlaceholder" type="text"/>
+<button onclick="saveSheet()" data-i18n="saveSheet">Save Sheet</button>
 </div>
 <div class="header">
-<h2>Remaining after bills</h2>
+<h2 data-i18n="remainingAfterBills">Remaining after bills</h2>
 <div class="remaining-amount" id="remaining-display">$0.00</div>
-<div class="retention-rate">Retention rate: <span id="retention-display">0.0%</span></div>
+<div class="retention-rate"><span data-i18n="retentionRate">Retention rate:</span> <span id="retention-display">0.0%</span></div>
 </div>
 <div class="section" id="income-section">
 <div class="section-title">
-  <span>Income</span>
-  <button type="button" class="add-income-btn" onclick="addIncomeRow()">+ Add Income</button>
+  <span data-i18n="income">Income</span>
+  <button type="button" class="add-income-btn" onclick="addIncomeRow()" data-i18n="addIncome">+ Add Income</button>
 </div>
 <div id="income-list" class="income-list"></div>
-<div id="income-empty" class="income-empty">No income added yet. Add your first income source above.</div>
+<div id="income-empty" class="income-empty" data-i18n="incomeEmpty">No income added yet. Add your first income source above.</div>
 <div class="footer" style="margin-top: 0; padding-top: 8px; font-size: 14px;">
-<span>Total Income</span>
+<span data-i18n="totalIncome">Total Income</span>
 <span id="total-income-display">$0.00</span>
 </div>
 </div>
 <div class="section" id="fixed-bills-section">
 <div class="section-title title-blue">
-  <span>Fixed Bills</span>
-  <button type="button" class="add-income-btn" onclick="addBillRow('fixed')">+ Add Fixed Bill</button>
+  <span data-i18n="fixedBills">Fixed Bills</span>
+  <button type="button" class="add-income-btn" onclick="addBillRow('fixed')" data-i18n="addFixedBill">+ Add Fixed Bill</button>
 </div>
 <div id="fixed-bills-list" class="bill-list"></div>
-<div class="income-empty" id="fixed-bills-empty">No fixed bills yet. Add one above, or keep the preset bills below as a starting point.</div>
+<div class="income-empty" id="fixed-bills-empty" data-i18n="fixedBillsEmpty">No fixed bills yet. Add one above, or keep the preset bills below as a starting point.</div>
 </div>
 <div class="section" id="variable-bills-section">
 <div class="section-title title-green">
-  <span>Variable &amp; Subscriptions</span>
-  <button type="button" class="add-income-btn" onclick="addBillRow('variable')">+ Add Variable / Subscription</button>
+  <span data-i18n="variableSubs">Variable &amp; Subscriptions</span>
+  <button type="button" class="add-income-btn" onclick="addBillRow('variable')" data-i18n="addVariable">+ Add Variable / Subscription</button>
 </div>
 <div id="variable-bills-list" class="bill-list"></div>
-<div class="income-empty" id="variable-bills-empty">No variable bills or subscriptions yet. Add one above.</div>
+<div class="income-empty" id="variable-bills-empty" data-i18n="variableEmpty">No variable bills or subscriptions yet. Add one above.</div>
 </div>
 <div class="section" id="extra-expenses-section">
-<div class="section-title title-orange">Extra Expenses</div>
+<div class="section-title title-orange" data-i18n="extraExpenses">Extra Expenses</div>
 <div class="add-expense-row">
-<input id="new-expense-name" placeholder="Expense Name (e.g. Groceries)" type="text"/>
+<input id="new-expense-name" placeholder="Expense Name (e.g. Groceries)" data-i18n-placeholder="expenseNamePlaceholder" type="text"/>
 <input id="new-expense-amount" min="0" placeholder="0.00" step="0.01" type="number"/>
-<button onclick="addExtraExpenseFromInput()">Add</button>
+<button onclick="addExtraExpenseFromInput()" data-i18n="add">Add</button>
 </div>
 <div id="dynamic-expenses-container"></div>
 </div>
 <div class="footer">
-<span>Total bills</span>
+<span data-i18n="totalBills">Total bills</span>
 <span id="total-bills-display">$0.00</span>
 </div>
 </div><div class="dashboard-wrap" id="dashboard-wrap">
@@ -1383,90 +1414,220 @@
 <script>
   const STORAGE_PREFIX = "budget_tracker_";
 
+  /* ===== Language / i18n ===== */
+  const LANGUAGE_STORAGE_KEY = 'budget_dashboard_language';
+  let currentLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'en';
+
+  const I18N = {
+    en: {
+      language:'Language', darkMode:'Dark mode', toggleDarkMode:'Toggle dark mode',
+      savedSheets:'Saved Sheets', today:'Today', billsThisMonth:'Bills this month',
+      savePlaceholder:'Month Year (e.g. September 2026)', saveSheet:'Save Sheet',
+      remainingAfterBills:'Remaining after bills', retentionRate:'Retention rate:',
+      income:'Income', addIncome:'+ Add Income', incomeEmpty:'No income added yet. Add your first income source above.',
+      totalIncome:'Total Income', fixedBills:'Fixed Bills', addFixedBill:'+ Add Fixed Bill',
+      fixedBillsEmpty:'No fixed bills yet. Add one above to get started.',
+      variableSubs:'Variable & Subscriptions', addVariable:'+ Add Variable / Subscription',
+      variableEmpty:'No variable bills or subscriptions yet. Add one above.', extraExpenses:'Extra Expenses',
+      expenseNamePlaceholder:'Expense Name (e.g. Groceries)', add:'Add', totalBills:'Total bills',
+      incomeName:'Income name', incomeNamePlaceholder:'e.g. Main Job', date:'Date', amount:'Amount', remove:'Remove',
+      dueDay:'Due day', fixedBill:'Fixed Bill', subscription:'Subscription', newFixedBill:'New Fixed Bill', newSubscription:'New Subscription',
+      noSavedSheets:'No saved sheets yet.',
+      worldClock:'World Clock', financialTip:'Financial Tip', billSnapshot:'Bill Snapshot', upcomingBills:'Upcoming Bills',
+      savingsTarget:'Savings Target', nextDue:'Next Due', budgetHealth:'Budget Health', paydayCountdown:'Payday Countdown',
+      quickNotes:'Quick Notes', snake:'Snake', dailyBudget:'Daily Budget', monthlyBudget:'Monthly Budget', weeklyBudget:'Weekly Budget', monthProgress:'Month Progress', billLoad:'Bill Load', biggestBill:'Biggest Bill',
+      dragWidget:'Drag widget', expandWidget:'Expand widget', collapseWidget:'Collapse widget', removeWidget:'Remove widget',
+      addWidget:'Add a widget', widgetHint:'Click a widget to add or remove it. Each type can appear only once. The inventory stays open until you close it. Drag the hand to reorder widgets.',
+      local:'Local', eastern:'Eastern', central:'Central', mountain:'Mountain', pacific:'Pacific', london:'London', utc:'UTC', tokyo:'Tokyo', sydney:'Sydney',
+      changesEvery15s:'Changes every 15s', tip:'Tip', of:'of', totalMonthlyBills:'Total monthly bills', bills:'Bills', remaining:'Remaining',
+      setTarget:'Set a target in this widget', target:'Target', nearestDue:'Nearest due date', noDueDate:'No due date entered',
+      todayDue:'Today', day:'day', days:'days', week:'week', weeks:'weeks', moneyRetained:'Money retained this month', keepSpending:'Keep your spending below income.',
+      excellentSave:'Excellent room to save or pay down debt.', solidPosition:'Solid position. Keep the momentum.', watchVariable:'Watch variable spending this month.', tightMonth:'Tight month — protect essentials first.',
+      nextPayday:'Next payday', addIncomeDate:'Add an income date', takeBreak:'Take a tiny break 🎮', score:'Score:', highScore:'High Score:', playSnake:'Play Snake', pause:'Pause', snakeHelp:'Arrow keys or WASD to move.',
+      savedAutomatically:'Saved automatically on this widget.', safeDaily:'Safe daily amount from what\'s left', basedDays:'Based on the days left in this month.', monthProgressLabel:'Month progress',
+      billsCompared:'Bills compared with income', largestBill:'Largest current bill', noneYet:'None yet', addAmounts:'Add bill amounts to see your largest one.', largestCopy:'This is the largest bill currently in your plan.',
+      addDueDays:'Add due days to see upcoming bills.', billsDueIn:'Bills due in {month}', noDueDates:'No due dates entered for this month.', dueOn:'Due on the {day}{ordinal}',
+      pleaseExpense:'Please enter an expense name.', pleaseSave:'Please enter a Month/Year to save.',
+      wallpaperClose:'Close wallpaper picker', wallpaperOpen:'Open wallpaper picker',
+      english:'English', chinese:'简体中文', spanish:'Español'
+    },
+    zh: {
+      language:'语言', darkMode:'深色模式', toggleDarkMode:'切换深色模式', savedSheets:'已保存的表格', today:'今天',
+      billsThisMonth:'本月账单', savePlaceholder:'月份/年份（例如：2026年9月）', saveSheet:'保存表格', remainingAfterBills:'扣除账单后剩余',
+      retentionRate:'留存率：', income:'收入', addIncome:'+ 添加收入', incomeEmpty:'还没有添加收入。请从上方添加第一笔收入。', totalIncome:'总收入',
+      fixedBills:'固定账单', addFixedBill:'+ 添加固定账单', fixedBillsEmpty:'还没有固定账单。请在上方添加以开始。',
+      variableSubs:'可变账单和订阅', addVariable:'+ 添加可变账单/订阅', variableEmpty:'还没有可变账单或订阅。请在上方添加。',
+      extraExpenses:'额外支出', expenseNamePlaceholder:'支出名称（例如：杂货）', add:'添加', totalBills:'账单总额', incomeName:'收入名称', incomeNamePlaceholder:'例如：主业工资', date:'日期', amount:'金额', remove:'删除', dueDay:'到期日',
+      fixedBill:'固定账单', subscription:'订阅', newFixedBill:'新固定账单', newSubscription:'新订阅', noSavedSheets:'还没有保存的表格。',
+      worldClock:'世界时钟', financialTip:'理财提示', billSnapshot:'账单概览', upcomingBills:'即将到期', savingsTarget:'储蓄目标', nextDue:'最近到期', budgetHealth:'预算健康度', paydayCountdown:'发薪日倒计时', quickNotes:'快速笔记', snake:'贪吃蛇', dailyBudget:'每日预算', monthlyBudget:'每月预算', weeklyBudget:'每周预算', monthProgress:'本月进度', billLoad:'账单负担', biggestBill:'最大账单',
+      dragWidget:'拖动小工具', expandWidget:'展开小工具', collapseWidget:'收起小工具', removeWidget:'移除小工具', addWidget:'添加小工具', widgetHint:'点击小工具即可添加或移除，每种小工具只能出现一次。清单会一直打开，直到你手动关闭。拖动手形图标可以重新排序。',
+      local:'本地', eastern:'美东', central:'美中', mountain:'美山地', pacific:'美西', london:'伦敦', utc:'UTC', tokyo:'东京', sydney:'悉尼',
+      changesEvery15s:'每15秒变化', tip:'提示', of:'共', totalMonthlyBills:'每月账单总额', bills:'账单', remaining:'剩余', setTarget:'在此小工具中设置目标', target:'目标', nearestDue:'最近到期日', noDueDate:'未输入到期日', todayDue:'今天', day:'天', days:'天',
+      moneyRetained:'本月资金留存', keepSpending:'尽量让支出低于收入。', excellentSave:'有很好的空间用于储蓄或偿还债务。', solidPosition:'状况不错，继续保持。', watchVariable:'留意本月的可变支出。', tightMonth:'本月空间紧张——优先保障必要支出。',
+      nextPayday:'下次发薪', addIncomeDate:'添加收入日期', takeBreak:'休息一下吧 🎮', score:'得分：', highScore:'最高分：', playSnake:'开始贪吃蛇', pause:'暂停', snakeHelp:'使用方向键或 WASD 移动。', savedAutomatically:'此小工具会自动保存。', safeDaily:'根据剩余金额计算的每日安全额度', basedDays:'根据本月剩余天数计算。', monthProgressLabel:'本月进度',
+      billsCompared:'账单占收入比例', largestBill:'当前最大账单', noneYet:'暂无', addAmounts:'添加账单金额后即可查看最大账单。', largestCopy:'这是当前计划中金额最大的账单。', addDueDays:'添加到期日后即可查看即将到期的账单。', billsDueIn:'{month}到期账单', noDueDates:'本月没有填写到期日。', dueOn:'在{day}日到期',
+      pleaseExpense:'请输入支出名称。', pleaseSave:'请输入月份/年份以保存。', wallpaperClose:'关闭壁纸选择器', wallpaperOpen:'打开壁纸选择器', english:'English', chinese:'简体中文', spanish:'Español'
+    },
+    es: {
+      language:'Idioma', darkMode:'Modo oscuro', toggleDarkMode:'Alternar modo oscuro', savedSheets:'Hojas guardadas', today:'Hoy', billsThisMonth:'Facturas de este mes',
+      savePlaceholder:'Mes Año (por ejemplo, septiembre de 2026)', saveSheet:'Guardar hoja', remainingAfterBills:'Restante después de facturas', retentionRate:'Tasa de retención:', income:'Ingresos', addIncome:'+ Añadir ingreso', incomeEmpty:'Aún no hay ingresos. Añade tu primera fuente de ingresos arriba.', totalIncome:'Ingresos totales',
+      fixedBills:'Facturas fijas', addFixedBill:'+ Añadir factura fija', fixedBillsEmpty:'Aún no hay facturas fijas. Añade una arriba para comenzar.', variableSubs:'Variables y suscripciones', addVariable:'+ Añadir variable / suscripción', variableEmpty:'Aún no hay facturas variables o suscripciones. Añade una arriba.',
+      extraExpenses:'Gastos extra', expenseNamePlaceholder:'Nombre del gasto (por ejemplo, compras)', add:'Añadir', totalBills:'Total de facturas', incomeName:'Nombre del ingreso', incomeNamePlaceholder:'p. ej. Trabajo principal', date:'Fecha', amount:'Importe', remove:'Eliminar', dueDay:'Día de vencimiento', fixedBill:'Factura fija', subscription:'Suscripción', newFixedBill:'Nueva factura fija', newSubscription:'Nueva suscripción', noSavedSheets:'Aún no hay hojas guardadas.',
+      worldClock:'Reloj mundial', financialTip:'Consejo financiero', billSnapshot:'Resumen de facturas', upcomingBills:'Próximas facturas', savingsTarget:'Meta de ahorro', nextDue:'Próximo vencimiento', budgetHealth:'Salud del presupuesto', paydayCountdown:'Cuenta atrás de pago', quickNotes:'Notas rápidas', snake:'Snake', dailyBudget:'Presupuesto diario', monthlyBudget:'Presupuesto mensual', weeklyBudget:'Presupuesto semanal', monthProgress:'Progreso del mes', billLoad:'Carga de facturas', biggestBill:'Factura más grande',
+      dragWidget:'Arrastrar widget', expandWidget:'Expandir widget', collapseWidget:'Contraer widget', removeWidget:'Eliminar widget', addWidget:'Añadir un widget', widgetHint:'Haz clic en un widget para añadirlo o quitarlo. Cada tipo solo puede aparecer una vez. El inventario permanece abierto hasta que lo cierres. Arrastra el icono de mano para reordenar.',
+      local:'Local', eastern:'Este', central:'Centro', mountain:'Montaña', pacific:'Pacífico', london:'Londres', utc:'UTC', tokyo:'Tokio', sydney:'Sídney', changesEvery15s:'Cambia cada 15 s', tip:'Consejo', of:'de', totalMonthlyBills:'Facturas mensuales totales', bills:'Facturas', remaining:'Restante', setTarget:'Establece un objetivo en este widget', target:'Objetivo', nearestDue:'Próximo vencimiento', noDueDate:'No se ha indicado fecha de vencimiento', todayDue:'Hoy', day:'día', days:'días', week:'semana', weeks:'semanas', moneyRetained:'Dinero retenido este mes', keepSpending:'Mantén tus gastos por debajo de tus ingresos.',
+      excellentSave:'Hay buen margen para ahorrar o reducir deudas.', solidPosition:'Buena posición. Mantén el impulso.', watchVariable:'Vigila el gasto variable este mes.', tightMonth:'Mes ajustado: protege primero lo esencial.', nextPayday:'Próximo día de pago', addIncomeDate:'Añade una fecha de ingreso', takeBreak:'Tómate un pequeño descanso 🎮', score:'Puntuación:', highScore:'Récord:', playSnake:'Jugar Snake', pause:'Pausa', snakeHelp:'Usa las flechas o WASD para moverte.', savedAutomatically:'Se guarda automáticamente en este widget.', safeDaily:'Importe diario seguro con lo que queda', basedDays:'Según los días que quedan del mes.', monthProgressLabel:'Progreso del mes', billsCompared:'Facturas comparadas con ingresos', largestBill:'Mayor factura actual', noneYet:'Aún ninguna', addAmounts:'Añade importes para ver la factura más grande.', largestCopy:'Esta es la factura más grande de tu plan actual.', addDueDays:'Añade días de vencimiento para ver próximas facturas.', billsDueIn:'Facturas con vencimiento en {month}', noDueDates:'No hay fechas de vencimiento para este mes.', dueOn:'Vence el día {day}{ordinal}', pleaseExpense:'Introduce un nombre de gasto.', pleaseSave:'Introduce un mes/año para guardar.', wallpaperClose:'Cerrar selector de fondo', wallpaperOpen:'Abrir selector de fondo', english:'English', chinese:'简体中文', spanish:'Español'
+    }
+  };
+
+  const WEEKDAYS = {
+    en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    zh:['日','一','二','三','四','五','六'],
+    es:['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
+  };
+  const MONTH_LOCALES = {en:'en-US', zh:'zh-CN', es:'es-ES'};
+  const ORDINALS = {en:['th','st','nd','rd'], zh:['日'], es:['.']};
+
+  function t(key, vars = {}) {
+    const dict = I18N[currentLanguage] || I18N.en;
+    let str = dict[key] ?? I18N.en[key] ?? key;
+    Object.entries(vars).forEach(([k,v]) => { str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), String(v)); });
+    return str;
+  }
+  function tTip(index) {
+    const tips = {
+      zh:['先建立一笔小型应急储备，再去优化其他项目。','在发薪日自动储蓄，让储蓄先于消费发生。','每隔几个月检查订阅。安静的重复扣款依然是重复扣款。','为食物和燃油设定现实分类。虚幻的预算只是打扮过的表格。','对于不规则账单，把年度总额除以12，每月提前留存。','把账单到期日和发薪日放在一起看，减少现金流意外缺口。','还清一笔债务后，把原来的还款转去储蓄或下一笔债务。','预算应该告诉你钱在做什么，而不是让你因为是个普通人而内疚。','给每月计划留一点余量。零余量预算很容易漂亮地崩掉。','每年比较一次固定支出，而不是只看月度变化。小漏洞会变成惊人的总额。'],
+      es:['Crea primero un pequeño colchón de emergencia antes de optimizar todo lo demás.','Automatiza el ahorro el día de pago para ahorrar antes de gastar.','Revisa las suscripciones cada pocos meses. Los cargos recurrentes silenciosos siguen siendo recurrentes.','Usa categorías realistas para comida y combustible. Un presupuesto de fantasía sigue siendo fantasía.','Para facturas irregulares, divide el total anual entre 12 y aparta esa cantidad cada mes.','Mantén visibles las fechas de vencimiento y relaciónalas con tus días de cobro para evitar sorpresas de flujo de caja.','Cuando pagues una deuda, redirige ese pago al ahorro o a la siguiente deuda.','Un presupuesto debería decirte qué hace tu dinero, no hacerte sentir culpable por ser humano.','Deja un poco de margen en tu plan mensual. Los presupuestos sin margen se rompen rápido.','Compara los gastos recurrentes al año, no solo mes a mes. Pequeñas fugas crean totales sorprendentes.']
+    };
+    if (currentLanguage === 'en') return FINANCIAL_TIPS[index];
+    return tips[currentLanguage][index];
+  }
+  function setLanguage(lang) {
+    if (!I18N[lang]) lang = 'en';
+    currentLanguage = lang;
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : lang;
+    const select = document.getElementById('language-select'); if (select) select.value = lang;
+    applyLanguage();
+    renderWidgetStage();
+    renderWidgetDrawer();
+    loadSidebar();
+    updateIncomeEmptyState();
+    updateBillEmptyState('fixed'); updateBillEmptyState('variable');
+    renderCalendar();
+    calculateBudget();
+  }
+  function applyLanguage() {
+    document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = t(el.dataset.i18nPlaceholder));
+    document.querySelectorAll('[data-i18n-title]').forEach(el => el.title = t(el.dataset.i18nTitle));
+    document.querySelectorAll('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria)));
+    document.querySelectorAll('[data-weekday]').forEach(el => { const idx=Number(el.dataset.weekday); el.textContent=WEEKDAYS[currentLanguage][idx]; });
+    document.querySelectorAll('.language-select option[value="en"]').forEach(el => el.textContent=t('english'));
+    document.querySelectorAll('.language-select option[value="zh"]').forEach(el => el.textContent=t('chinese'));
+    document.querySelectorAll('.language-select option[value="es"]').forEach(el => el.textContent=t('spanish'));
+    document.querySelectorAll('.income-row label').forEach((el, i) => { el.textContent = [t('incomeName'), t('date'), t('amount')][i] || el.textContent; });
+    document.querySelectorAll('.editable-bill-item .due-label, .dynamic-expense-item .due-label').forEach(el => el.textContent=t('dueDay'));
+    document.querySelectorAll('.editable-bill-item .remove-btn, .dynamic-expense-item .remove-btn, .income-remove').forEach(el => el.textContent=t('remove'));
+    document.querySelectorAll('.editable-bill-item .due-day-input, .dynamic-expense-item .due-day-input').forEach(el => { el.placeholder='1-31'; });
+    const note = document.querySelector('.widget-hint'); if (note) note.textContent=t('widgetHint');
+  }
 
   /* ===== Widget Dashboard Logic ===== */
   const WIDGET_STORAGE_KEY = 'budget_widget_layout_v3';
   const WIDGETS = {
     clock: {
-      title: 'World Clock',
+      titleKey: 'worldClock',
       icon: '🕒',
       span: 4,
       render: renderClockWidget
     },
     tips: {
-      title: 'Financial Tip',
+      titleKey: 'financialTip',
       icon: '💡',
       span: 8,
       render: renderTipWidget
     },
     overview: {
-      title: 'Bill Snapshot',
+      titleKey: 'billSnapshot',
       icon: '📊',
       span: 4,
       render: renderOverviewWidget
     },
     upcoming: {
-      title: 'Upcoming Bills',
+      titleKey: 'upcomingBills',
       icon: '📅',
       span: 4,
       render: renderUpcomingWidget
     },
     savings: {
-      title: 'Savings Target',
+      titleKey: 'savingsTarget',
       icon: '🎯',
       span: 4,
       render: renderSavingsWidget
     },
     countdown: {
-      title: 'Next Due',
+      titleKey: 'nextDue',
       icon: '⏳',
       span: 4,
       render: renderCountdownWidget
     },
     health: {
-      title: 'Budget Health',
+      titleKey: 'budgetHealth',
       icon: '❤️',
       span: 4,
       render: renderHealthWidget
     },
     payday: {
-      title: 'Payday Countdown',
+      titleKey: 'paydayCountdown',
       icon: '💰',
       span: 4,
       render: renderPaydayWidget
     },
     notes: {
-      title: 'Quick Notes',
+      titleKey: 'quickNotes',
       icon: '📝',
       span: 4,
       render: renderNotesWidget
     },
     snake: {
-      title: 'Snake',
+      titleKey: 'snake',
       icon: '🐍',
       span: 8,
       render: renderSnakeWidget
     },
     daily: {
-      title: 'Daily Budget',
+      titleKey: 'dailyBudget',
       icon: '🗓️',
       span: 4,
       render: renderDailyBudgetWidget
     },
+    monthly: {
+      titleKey: 'monthlyBudget',
+      icon: '📅',
+      span: 4,
+      render: renderMonthlyBudgetWidget
+    },
+    weekly: {
+      titleKey: 'weeklyBudget',
+      icon: '💵',
+      span: 4,
+      render: renderWeeklyBudgetWidget
+    },
     progress: {
-      title: 'Month Progress',
+      titleKey: 'monthProgress',
       icon: '📈',
       span: 4,
       render: renderMonthProgressWidget
     },
     billLoad: {
-      title: 'Bill Load',
+      titleKey: 'billLoad',
       icon: '🧾',
       span: 4,
       render: renderBillLoadWidget
     },
     biggestBill: {
-      title: 'Biggest Bill',
+      titleKey: 'biggestBill',
       icon: '🔎',
       span: 4,
       render: renderBiggestBillWidget
@@ -1559,12 +1720,12 @@
       <div class="widget-head">
         <div class="widget-title">
           <span class="widget-title-icon">${def.icon}</span>
-          <span>${def.title}</span>
+          <span>${t(def.titleKey)}</span>
         </div>
         <div class="widget-tools">
-          <button class="widget-tool-btn widget-drag-handle" title="Drag widget" aria-label="Drag widget">✋</button>
-          <button class="widget-tool-btn widget-collapse" title="${item.collapsed ? 'Expand widget' : 'Collapse widget'}" aria-label="${item.collapsed ? 'Expand widget' : 'Collapse widget'}">${item.collapsed ? '⌄' : '⌃'}</button>
-          <button class="widget-tool-btn widget-remove" title="Remove widget" aria-label="Remove widget">×</button>
+          <button class="widget-tool-btn widget-drag-handle" title="Drag widget" aria-label="Drag widget" data-i18n-title="dragWidget" data-i18n-aria="dragWidget">✋</button>
+          <button class="widget-tool-btn widget-collapse" title="${item.collapsed ? t('expandWidget') : t('collapseWidget')}" aria-label="${item.collapsed ? t('expandWidget') : t('collapseWidget')}">${item.collapsed ? '⌄' : '⌃'}</button>
+          <button class="widget-tool-btn widget-remove" title="Remove widget" aria-label="Remove widget" data-i18n-title="removeWidget" data-i18n-aria="removeWidget">×</button>
         </div>
       </div>
       <div class="widget-content"></div>
@@ -1809,11 +1970,14 @@
       const active = widgetState.some(w => w.type === type);
       const button = document.createElement('button');
       button.type = 'button';
+      const widgetName = t(def.titleKey);
       button.className = `widget-add-btn${active ? ' widget-active' : ''}`;
       button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      button.setAttribute('title', widgetName);
+      button.dataset.fullName = widgetName;
       button.innerHTML = `
         <span class="widget-add-icon">${def.icon}</span>
-        <span>${def.title}</span>
+        <span class="widget-add-name">${escapeHtml(widgetName)}</span>
         <span class="widget-add-state">${active ? 'ON' : 'ADD'}</span>
       `;
       button.addEventListener('click', () => addWidget(type));
@@ -1849,6 +2013,11 @@
     ['Sydney', 'Australia/Sydney']
   ];
 
+  function tClockZone(label) {
+    const map = { Local:'local', Eastern:'eastern', Central:'central', Mountain:'mountain', Pacific:'pacific', London:'london', UTC:'utc', Tokyo:'tokyo', Sydney:'sydney' };
+    return t(map[label] || 'local');
+  }
+
   function renderClockWidget(content, item) {
     content.innerHTML = `
       <div class="clock-wrap">
@@ -1863,7 +2032,7 @@
       </div>
       <div class="clock-controls">
         <select class="clock-zone" aria-label="Clock timezone">
-          ${CLOCK_ZONES.map(([label, zone]) => `<option value="${zone}">${label} · ${zone}</option>`).join('')}
+          ${CLOCK_ZONES.map(([label, zone]) => `<option value="${zone}">${tClockZone(label)} · ${zone}</option>`).join('')}
         </select>
       </div>
     `;
@@ -1920,8 +2089,8 @@
       <div class="tip-body">
         <div class="tip-text" data-tip-text></div>
         <div class="tip-meta">
-          <span data-tip-index>Tip 1 of ${FINANCIAL_TIPS.length}</span>
-          <span>Changes every 15s</span>
+          <span data-tip-index>${t('tip')} 1 ${currentLanguage==='zh'?t('of')+' ':t('of')+' '}${FINANCIAL_TIPS.length}</span>
+          <span>${t('changesEvery15s')}</span>
         </div>
         <div class="tip-progress"><div class="tip-progress-fill" data-tip-progress></div></div>
       </div>
@@ -1929,8 +2098,8 @@
 
     const render = () => {
       const index = item.config?.tipIndex ?? 0;
-      content.querySelector('[data-tip-text]').textContent = FINANCIAL_TIPS[index];
-      content.querySelector('[data-tip-index]').textContent = `Tip ${index + 1} of ${FINANCIAL_TIPS.length}`;
+      content.querySelector('[data-tip-text]').textContent = tTip(index);
+      content.querySelector('[data-tip-index]').textContent = `${t('tip')} ${index + 1} ${t('of')} ${FINANCIAL_TIPS.length}`;
       content.querySelector('[data-tip-progress]').style.width = '0%';
 
       const fill = content.querySelector('[data-tip-progress]');
@@ -1959,15 +2128,15 @@
     content.innerHTML = `
       <div style="display:grid;gap:10px;">
         <div style="font-size:26px;font-weight:800;" data-over-total>$0.00</div>
-        <div style="font-size:12px;color:var(--muted);">Total monthly bills</div>
+        <div style="font-size:12px;color:var(--muted);">${t('totalMonthlyBills')}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <div style="padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--panel-soft);">
             <div style="font-size:18px;font-weight:800;" data-over-count>0</div>
-            <div style="font-size:10px;color:var(--muted);">Bills</div>
+            <div style="font-size:10px;color:var(--muted);">${t('bills')}</div>
           </div>
           <div style="padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--panel-soft);">
             <div style="font-size:18px;font-weight:800;" data-over-remaining>$0</div>
-            <div style="font-size:10px;color:var(--muted);">Remaining</div>
+            <div style="font-size:10px;color:var(--muted);">${t('remaining')}</div>
           </div>
         </div>
       </div>
@@ -1994,7 +2163,7 @@
       list.innerHTML = bills.length ? bills.map(b => `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--border);border-radius:9px;background:var(--panel-soft);">
           <span>${b.icon} <strong>${escapeHtml(b.name)}</strong></span>
-          <span style="font-size:12px;color:var(--muted);">Day ${b.dueDay}</span>
+          <span style="font-size:12px;color:var(--muted);">${t('day')} ${b.dueDay}</span>
         </div>
       `).join('') : `<div style="color:var(--muted);font-size:12px;">Add due days to see upcoming bills.</div>`;
     };
@@ -2006,13 +2175,13 @@
   function renderSavingsWidget(content) {
     content.innerHTML = `
       <div style="display:grid;gap:8px;">
-        <div style="font-size:12px;color:var(--muted);">Set a target in this widget</div>
+        <div style="font-size:12px;color:var(--muted);">${t('setTarget')}</div>
         <input type="number" min="0" step="0.01" value="0" data-save-target>
         <div style="height:7px;background:var(--border);border-radius:999px;overflow:hidden;">
           <div data-save-fill style="width:0%;height:100%;background:var(--accent);border-radius:inherit;transition:width 500ms cubic-bezier(.22,1,.36,1);"></div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">
-          <span>Target</span><span data-save-target-label>$1,000.00</span>
+          <span>${t('target')}</span><span data-save-target-label>$1,000.00</span>
         </div>
       </div>
     `;
@@ -2040,9 +2209,9 @@
   function renderCountdownWidget(content) {
     content.innerHTML = `
       <div style="display:grid;gap:8px;">
-        <div style="font-size:13px;color:var(--muted);">Nearest due date</div>
+        <div style="font-size:13px;color:var(--muted);">${t('nearestDue')}</div>
         <div style="font-size:31px;font-weight:900;" data-next-countdown>--</div>
-        <div style="display:flex;align-items:center;gap:7px;font-size:12px;" data-next-name>No due date entered</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;" data-next-name>${t('noDueDate')}</div>
       </div>
     `;
     const update = () => {
@@ -2063,12 +2232,12 @@
 
       if (!nearest) {
         content.querySelector('[data-next-countdown]').textContent = '--';
-        content.querySelector('[data-next-name]').textContent = 'No due date entered';
+        content.querySelector('[data-next-name]').textContent = t('noDueDate');
         return;
       }
 
       const days = Math.max(0, Math.ceil((nearest.date - now) / 86400000));
-      content.querySelector('[data-next-countdown]').textContent = days === 0 ? 'Today' : `${days} day${days === 1 ? '' : 's'}`;
+      content.querySelector('[data-next-countdown]').textContent = days === 0 ? t('todayDue') : `${days} ${days === 1 ? t('day') : t('days')}`;
       content.querySelector('[data-next-name]').innerHTML = `${nearest.icon} <strong>${escapeHtml(nearest.name)}</strong> · Day ${nearest.dueDay}`;
     };
     update();
@@ -2081,11 +2250,11 @@
     content.innerHTML = `
       <div style="display:grid;gap:10px;align-content:center;height:100%;">
         <div style="display:flex;justify-content:space-between;align-items:end;gap:8px;">
-          <div><div style="font-size:12px;color:var(--muted);">Money retained this month</div><div style="font-size:30px;font-weight:900;" data-health-rate>0%</div></div>
+          <div><div style="font-size:12px;color:var(--muted);">${t('moneyRetained')}</div><div style="font-size:30px;font-weight:900;" data-health-rate>0%</div></div>
           <div style="font-size:26px;" data-health-emoji>🙂</div>
         </div>
         <div style="height:8px;background:var(--border);border-radius:999px;overflow:hidden;"><div data-health-fill style="height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width 400ms ease;"></div></div>
-        <div style="font-size:11px;color:var(--muted);" data-health-copy>Keep your spending below income.</div>
+        <div style="font-size:11px;color:var(--muted);" data-health-copy>${t('keepSpending')}</div>
       </div>`;
     const update = () => {
       const income = getTotalIncome();
@@ -2096,7 +2265,7 @@
       content.querySelector('[data-health-fill]').style.width = `${rate}%`;
       const emoji = rate >= 70 ? '🚀' : rate >= 50 ? '🙂' : rate >= 25 ? '😐' : '⚠️';
       content.querySelector('[data-health-emoji]').textContent = emoji;
-      content.querySelector('[data-health-copy]').textContent = rate >= 70 ? 'Excellent room to save or pay down debt.' : rate >= 50 ? 'Solid position. Keep the momentum.' : rate >= 25 ? 'Watch variable spending this month.' : 'Tight month — protect essentials first.';
+      content.querySelector('[data-health-copy]').textContent = rate >= 70 ? t('excellentSave') : rate >= 50 ? t('solidPosition') : rate >= 25 ? t('watchVariable') : t('tightMonth');
     };
     update();
     content._widgetUpdate = update;
@@ -2106,7 +2275,7 @@
   function renderPaydayWidget(content) {
     content.innerHTML = `
       <div style="display:grid;gap:8px;align-content:center;height:100%;">
-        <div style="font-size:12px;color:var(--muted);">Next payday</div>
+        <div style="font-size:12px;color:var(--muted);">${t('nextPayday')}</div>
         <div style="font-size:31px;font-weight:900;" data-payday-days>--</div>
         <div style="font-size:12px;" data-payday-label>1st or 15th</div>
       </div>`;
@@ -2121,13 +2290,13 @@
       const next = dates[0];
       if (!next) {
         content.querySelector('[data-payday-days]').textContent = '--';
-        content.querySelector('[data-payday-label]').textContent = 'Add an income date';
+        content.querySelector('[data-payday-label]').textContent = t('addIncomeDate');
         return;
       }
       const days = Math.max(0, Math.ceil((next - new Date(now.getFullYear(),now.getMonth(),now.getDate())) / 86400000));
       const name = [...document.querySelectorAll('.income-row')].find(r => r.querySelector('.income-date')?.value === next.toISOString().slice(0,10))?.querySelector('.income-name')?.value.trim() || 'Income';
-      content.querySelector('[data-payday-days]').textContent = days === 0 ? 'Today' : `${days} day${days === 1 ? '' : 's'}`;
-      content.querySelector('[data-payday-label]').textContent = `${name} · ${next.toLocaleDateString()}`;
+      content.querySelector('[data-payday-days]').textContent = days === 0 ? t('todayDue') : `${days} ${days === 1 ? t('day') : t('days')}`;
+      content.querySelector('[data-payday-label]').textContent = `${name} · ${next.toLocaleDateString(MONTH_LOCALES[currentLanguage])}`;
     };
     update();
     content._widgetUpdate = update;
@@ -2139,7 +2308,7 @@
     const saved = localStorage.getItem(key) || '';
     content.innerHTML = `
       <textarea data-notes style="width:100%;min-height:115px;resize:vertical;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);box-sizing:border-box;font:inherit;" placeholder="Jot down a reminder, bill note, or goal...">${escapeHtml(saved)}</textarea>
-      <div style="font-size:10px;color:var(--muted);margin-top:6px;">Saved automatically on this widget.</div>`;
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;">${t('savedAutomatically')}</div>`;
     const area = content.querySelector('[data-notes]');
     area.addEventListener('input', () => localStorage.setItem(key, area.value));
   }
@@ -2149,19 +2318,26 @@
     content.innerHTML = `
       <div style="display:grid;gap:8px;align-content:start;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <span style="font-size:11px;color:var(--muted);">Take a tiny break 🎮</span>
-          <span style="font-weight:800;font-size:13px;">Score: <span data-snake-score>0</span></span>
+          <span style="font-size:11px;color:var(--muted);">${t('takeBreak')}</span>
+          <div style="display:flex;gap:12px;align-items:center;font-size:12px;font-weight:800;">
+            <span>${t('score')} <span data-snake-score>0</span></span>
+            <span>${t('highScore')} <span data-snake-high-score>0</span></span>
+          </div>
         </div>
         <canvas data-snake-canvas width="320" height="160" style="width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:10px;background:var(--panel-soft);"></canvas>
         <div style="display:flex;gap:8px;justify-content:center;">
-          <button type="button" data-snake-play>Play Snake</button>
-          <button type="button" data-snake-pause style="background:var(--panel-soft);color:var(--text);border:1px solid var(--border);">Pause</button>
+          <button type="button" data-snake-play>${t('playSnake')}</button>
+          <button type="button" data-snake-pause style="background:var(--panel-soft);color:var(--text);border:1px solid var(--border);">${t('pause')}</button>
         </div>
-        <div style="font-size:10px;color:var(--muted);text-align:center;">Arrow keys or WASD to move.</div>
+        <div style="font-size:10px;color:var(--muted);text-align:center;">${t('snakeHelp')}</div>
       </div>`;
     const canvas = content.querySelector('[data-snake-canvas]');
     const ctx = canvas.getContext('2d');
     const scoreEl = content.querySelector('[data-snake-score]');
+    const highScoreEl = content.querySelector('[data-snake-high-score]');
+    const highScoreKey = 'budget_snake_high_score';
+    let highScore = parseInt(localStorage.getItem(highScoreKey) || '0', 10) || 0;
+    highScoreEl.textContent = String(highScore);
     const playBtn = content.querySelector('[data-snake-play]');
     const pauseBtn = content.querySelector('[data-snake-pause]');
     let snake = [], food = {x: 10, y: 5}, dir = {x: 1, y: 0}, timer = null, running = false, score = 0;
@@ -2180,7 +2356,16 @@
       const head = {x:snake[0].x+dir.x, y:snake[0].y+dir.y};
       if(head.x<0||head.y<0||head.x>=cols||head.y>=rows||snake.some(p=>p.x===head.x&&p.y===head.y)){ running=false; clearInterval(timer); timer=null; return; }
       snake.unshift(head);
-      if(head.x===food.x&&head.y===food.y){ score++; scoreEl.textContent=String(score); placeFood(); } else snake.pop();
+      if(head.x===food.x&&head.y===food.y){
+        score++;
+        scoreEl.textContent=String(score);
+        if(score > highScore){
+          highScore = score;
+          highScoreEl.textContent = String(highScore);
+          localStorage.setItem(highScoreKey, String(highScore));
+        }
+        placeFood();
+      } else snake.pop();
       draw();
     };
     const start = () => { reset(); running=true; clearInterval(timer); timer=setInterval(step,130); };
@@ -2196,13 +2381,54 @@
     reset();
   }
 
+  /* ===== Widget: Monthly Budget ===== */
+  function renderMonthlyBudgetWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;align-content:center;height:100%;">
+        <div style="font-size:12px;color:var(--muted);">${t('monthlyBudget')}</div>
+        <div style="font-size:31px;font-weight:900;" data-monthly-budget>$0.00</div>
+        <div style="font-size:11px;color:var(--muted);" data-monthly-copy>${t('remaining')}</div>
+      </div>`;
+    const update = () => {
+      const remainingText = document.getElementById('remaining-display')?.textContent || '$0.00';
+      const remaining = parseFloat(remainingText.replace(/[^0-9.-]/g,'')) || 0;
+      content.querySelector('[data-monthly-budget]').textContent = formatMoney(Math.max(0, remaining));
+      content.querySelector('[data-monthly-copy]').textContent = t('moneyRetained');
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
+  /* ===== Widget: Weekly Budget ===== */
+  function renderWeeklyBudgetWidget(content) {
+    content.innerHTML = `
+      <div style="display:grid;gap:8px;align-content:center;height:100%;">
+        <div style="font-size:12px;color:var(--muted);">${t('weeklyBudget')}</div>
+        <div style="font-size:31px;font-weight:900;" data-weekly-budget>$0.00</div>
+        <div style="font-size:11px;color:var(--muted);" data-weekly-copy></div>
+      </div>`;
+    const update = () => {
+      const remainingText = document.getElementById('remaining-display')?.textContent || '$0.00';
+      const remaining = Math.max(0, parseFloat(remainingText.replace(/[^0-9.-]/g,'')) || 0);
+      const now = new Date();
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const daysLeft = Math.max(1, Math.ceil((end - now) / 86400000) + 1);
+      const weeksLeft = Math.max(1, Math.ceil(daysLeft / 7));
+      const weekly = remaining / weeksLeft;
+      content.querySelector('[data-weekly-budget]').textContent = formatMoney(weekly);
+      content.querySelector('[data-weekly-copy]').textContent = `${weeksLeft} ${weeksLeft === 1 ? t('week') : t('weeks')}`;
+    };
+    update();
+    content._widgetUpdate = update;
+  }
+
   /* ===== Widget: Daily Budget ===== */
   function renderDailyBudgetWidget(content) {
     content.innerHTML = `
       <div style="display:grid;gap:8px;align-content:center;height:100%;">
-        <div style="font-size:12px;color:var(--muted);">Safe daily amount from what's left</div>
+        <div style="font-size:12px;color:var(--muted);">${t('safeDaily')}</div>
         <div style="font-size:31px;font-weight:900;" data-daily-amount>$0.00</div>
-        <div style="font-size:11px;color:var(--muted);" data-daily-copy>Based on the days left in this month.</div>
+        <div style="font-size:11px;color:var(--muted);" data-daily-copy>${t('basedDays')}</div>
       </div>`;
     const update = () => {
       const remainingText = document.getElementById('remaining-display')?.textContent || '$0.00';
@@ -2212,7 +2438,7 @@
       const daysLeft = Math.max(1, Math.ceil((end - now) / 86400000) + 1);
       const daily = remaining / daysLeft;
       content.querySelector('[data-daily-amount]').textContent = formatMoney(daily);
-      content.querySelector('[data-daily-copy]').textContent = `${daysLeft} day${daysLeft === 1 ? '' : 's'} left · ${formatMoney(remaining)} remaining`;
+      content.querySelector('[data-daily-copy]').textContent = `${daysLeft} ${daysLeft === 1 ? t('day') : t('days')} · ${formatMoney(remaining)} ${t('remaining').toLowerCase()}`;
     };
     update();
     content._widgetUpdate = update;
@@ -2224,7 +2450,7 @@
       <div style="display:grid;gap:9px;align-content:center;height:100%;">
         <div style="display:flex;justify-content:space-between;align-items:end;gap:8px;">
           <div>
-            <div style="font-size:12px;color:var(--muted);">Month progress</div>
+            <div style="font-size:12px;color:var(--muted);">${t('monthProgressLabel')}</div>
             <div style="font-size:30px;font-weight:900;" data-month-progress>0%</div>
           </div>
           <div style="font-size:22px;" data-month-days>0/0</div>
@@ -2250,7 +2476,7 @@
   function renderBillLoadWidget(content) {
     content.innerHTML = `
       <div style="display:grid;gap:9px;align-content:center;height:100%;">
-        <div style="font-size:12px;color:var(--muted);">Bills compared with income</div>
+        <div style="font-size:12px;color:var(--muted);">${t('billsCompared')}</div>
         <div style="font-size:31px;font-weight:900;" data-bill-load-rate>0%</div>
         <div style="height:8px;background:var(--border);border-radius:999px;overflow:hidden;">
           <div data-bill-load-fill style="height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width 400ms ease;"></div>
@@ -2264,7 +2490,7 @@
       const rate = income > 0 ? Math.round(Math.max(0, Math.min(100, totalBills / income * 100))) : 0;
       content.querySelector('[data-bill-load-rate]').textContent = `${rate}%`;
       content.querySelector('[data-bill-load-fill]').style.width = `${rate}%`;
-      content.querySelector('[data-bill-load-copy]').textContent = `${bills.length} bill${bills.length === 1 ? '' : 's'} · ${formatMoney(totalBills)} total`;
+      content.querySelector('[data-bill-load-copy]').textContent = `${bills.length} ${t('bills').toLowerCase()} · ${formatMoney(totalBills)} ${t('totalBills').toLowerCase()}`;
     };
     update();
     content._widgetUpdate = update;
@@ -2274,10 +2500,10 @@
   function renderBiggestBillWidget(content) {
     content.innerHTML = `
       <div style="display:grid;gap:7px;align-content:center;height:100%;">
-        <div style="font-size:12px;color:var(--muted);">Largest current bill</div>
-        <div style="font-size:18px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-biggest-name>None yet</div>
+        <div style="font-size:12px;color:var(--muted);">${t('largestBill')}</div>
+        <div style="font-size:18px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" data-biggest-name>${t('noneYet')}</div>
         <div style="font-size:30px;font-weight:900;" data-biggest-amount>$0.00</div>
-        <div style="font-size:11px;color:var(--muted);" data-biggest-copy>Add bill amounts to see your largest one.</div>
+        <div style="font-size:11px;color:var(--muted);" data-biggest-copy>${t('addAmounts')}</div>
       </div>`;
     const update = () => {
       const items = [...document.querySelectorAll('.bill-item')].map(item => ({
@@ -2287,14 +2513,14 @@
       items.sort((a,b) => b.amount - a.amount);
       const top = items[0];
       if (!top || top.amount <= 0) {
-        content.querySelector('[data-biggest-name]').textContent = 'None yet';
+        content.querySelector('[data-biggest-name]').textContent = t('noneYet');
         content.querySelector('[data-biggest-amount]').textContent = '$0.00';
-        content.querySelector('[data-biggest-copy]').textContent = 'Add bill amounts to see your largest one.';
+        content.querySelector('[data-biggest-copy]').textContent = t('addAmounts');
         return;
       }
       content.querySelector('[data-biggest-name]').textContent = top.name;
       content.querySelector('[data-biggest-amount]').textContent = formatMoney(top.amount);
-      content.querySelector('[data-biggest-copy]').textContent = 'This is the largest bill currently in your plan.';
+      content.querySelector('[data-biggest-copy]').textContent = t('largestCopy');
     };
     update();
     content._widgetUpdate = update;
@@ -2380,7 +2606,6 @@
     loadDarkMode();
     loadCalendarState();
     loadSidebar();
-    initializeBillPresets();
     calculateBudget();
     renderCalendar();
     scheduleDailyCalendarRefresh();
@@ -2388,6 +2613,9 @@
     initWidgets();
     updateIncomeEmptyState();
     initWallpaperPicker();
+    applyLanguage();
+    const langSelect = document.getElementById('language-select'); if (langSelect) langSelect.value = currentLanguage;
+    calculateBudget();
   };
 
   /* ===== Wallpaper Logic ===== */
@@ -2597,7 +2825,7 @@
 
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
-    const monthName = calendarDate.toLocaleString('en-US', { month: 'long' });
+    const monthName = calendarDate.toLocaleString(MONTH_LOCALES[currentLanguage], { month: 'long' });
     title.textContent = `${monthName} ${year}`;
 
     const firstDay = new Date(year, month, 1).getDay();
@@ -2658,7 +2886,7 @@
       grid.appendChild(cell);
     }
 
-    eventsTitle.textContent = `Bills due in ${monthName}`;
+    eventsTitle.textContent = t('billsDueIn', {month: monthName});
 
     const sortedBills = bills
       .filter(bill => bill.dueDay <= daysInMonth)
@@ -2669,7 +2897,7 @@
     if (!sortedBills.length) {
       const empty = document.createElement('div');
       empty.className = 'calendar-empty';
-      empty.textContent = 'No due dates entered for this month.';
+      empty.textContent = t('noDueDates');
       eventsList.appendChild(empty);
       return;
     }
@@ -2679,21 +2907,18 @@
       event.className = 'calendar-event';
       event.innerHTML = `
         <span class="calendar-event-icon">${bill.icon}</span>
-        <span><strong>${escapeHtml(bill.name)}</strong><br>Due on the ${bill.dueDay}${getOrdinal(bill.dueDay)}${bill.amount ? ` · ${formatMoney(bill.amount)}` : ''}</span>
+        <span><strong>${escapeHtml(bill.name)}</strong><br>${t('dueOn',{day:bill.dueDay,ordinal:getOrdinal(bill.dueDay)})}${bill.amount ? ` · ${formatMoney(bill.amount)}` : ''}</span>
       `;
       eventsList.appendChild(event);
     });
   }
 
   function getOrdinal(number) {
+    if (currentLanguage === 'zh') return '';
+    if (currentLanguage === 'es') return '.';
     const mod100 = number % 100;
-    if (mod100 >= 11 && mod100 <= 13) return "th";
-    switch (number % 10) {
-      case 1: return "st";
-      case 2: return "nd";
-      case 3: return "rd";
-      default: return "th";
-    }
+    if (mod100 >= 11 && mod100 <= 13) return 'th';
+    switch (number % 10) { case 1: return 'st'; case 2: return 'nd'; case 3: return 'rd'; default: return 'th'; }
   }
 
   function changeCalendarMonth(offset) {
@@ -2743,18 +2968,18 @@
     row.innerHTML = `
       <div class="income-row-grid">
         <div class="income-field">
-          <label>Income name</label>
-          <input type="text" class="income-name" placeholder="e.g. Main Job" value="${escapeHtml(data.name || '')}">
+          <label>${t('incomeName')}</label>
+          <input type="text" class="income-name" placeholder="${t('incomeNamePlaceholder')}" value="${escapeHtml(data.name || '')}">
         </div>
         <div class="income-field">
-          <label>Date</label>
+          <label>${t('date')}</label>
           <input type="date" class="income-date" value="${escapeHtml(data.date || '')}">
         </div>
         <div class="income-field">
-          <label>Amount</label>
+          <label>${t('amount')}</label>
           <input type="number" class="income-amount" min="0" step="0.01" value="${Number(data.amount || 0).toFixed(2)}">
         </div>
-        <button type="button" class="income-remove">Remove</button>
+        <button type="button" class="income-remove">${t('remove')}</button>
       </div>`;
 
     const refresh = () => { calculateBudget(); renderCalendar(); updateAllWidgets(); };
@@ -2829,7 +3054,7 @@
     if (!container) return null;
     const amount = Number(data.amount) || 0;
     const icon = data.icon || '💰';
-    const name = data.name || (type === 'fixed' ? 'New Fixed Bill' : 'New Subscription');
+    const name = data.name || (type === 'fixed' ? t('newFixedBill') : t('newSubscription'));
     const dueDay = data.dueDay || '';
     const id = data.id || `bill-custom-${++billCounter}`;
     const max = Math.max(1000, Math.ceil(Math.max(amount, 100) * 2 / 100) * 100);
@@ -2850,9 +3075,9 @@
           <select class="bill-icon-select" aria-label="${escapeHtml(name)} icon">
             ${getIconOptions(icon)}
           </select>
-          <span class="due-label">Due day</span>
+          <span class="due-label">${t('dueDay')}</span>
           <input type="number" class="due-day-input" min="1" max="31" placeholder="1-31" value="${escapeHtml(dueDay)}" aria-label="${escapeHtml(name)} due day">
-          <button type="button" class="remove-btn">Remove</button>
+          <button type="button" class="remove-btn">${t('remove')}</button>
         </div>
       </div>
       <div class="controls-row">
@@ -2913,8 +3138,6 @@
     const variable = document.getElementById('variable-bills-list');
     if (fixed) fixed.innerHTML = '';
     if (variable) variable.innerHTML = '';
-    BILL_PRESETS.fixed.forEach(item => addBillRow('fixed', item, false));
-    BILL_PRESETS.variable.forEach(item => addBillRow('variable', item, false));
     updateBillEmptyState('fixed');
     updateBillEmptyState('variable');
   }
@@ -2926,7 +3149,7 @@
     const name = nameInput.value.trim();
     const amount = parseFloat(amountInput.value) || 0;
 
-    if (!name) return alert("Please enter an expense name.");
+    if (!name) return alert(t('pleaseExpense'));
 
     createExtraExpenseUI(name, amount);
     nameInput.value = '';
@@ -2950,9 +3173,9 @@
           <select class="bill-icon-select" aria-label="${escapeHtml(name)} icon">
             ${getIconOptions(icon)}
           </select>
-          <span class="due-label">Due day</span>
+          <span class="due-label">${t('dueDay')}</span>
           <input type="number" class="due-day-input" min="1" max="31" placeholder="1-31" value="${escapeHtml(dueDay)}" aria-label="${escapeHtml(name)} due day">
-          <button class="remove-btn" type="button">Remove</button>
+          <button class="remove-btn" type="button">${t('remove')}</button>
         </div>
       </div>
       <div class="controls-row">
@@ -3010,7 +3233,7 @@
 
   function saveSheet() {
     const saveName = document.getElementById('save-name-input').value.trim();
-    if (!saveName) return alert("Please enter a Month/Year to save.");
+    if (!saveName) return alert(t('pleaseSave'));
 
     const data = {
       incomes: getIncomeRowsData(),
@@ -3105,7 +3328,7 @@
     savedKeys.sort();
 
     if (savedKeys.length === 0) {
-      list.innerHTML = '<li class="saved-item"><span style="color:#999; cursor:default;">No saved sheets yet.</span></li>';
+      list.innerHTML = `<li class="saved-item"><span style="color:#999; cursor:default;">${t('noSavedSheets')}</span></li>`;
       return;
     }
 
@@ -3122,7 +3345,7 @@
 </script>
 <div class="widget-launcher" id="widget-launcher">
 <div class="widget-drawer" id="widget-drawer">
-<h4>Add a widget</h4>
+<h4 data-i18n="addWidget">Add a widget</h4>
 <div class="widget-drawer-grid" id="widget-drawer-grid"></div>
 <div class="widget-hint">Click a widget to add or remove it. Each type can appear only once. The inventory stays open until you close it. Drag the hand to reorder widgets.</div>
 </div>
