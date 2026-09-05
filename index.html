@@ -82,6 +82,13 @@
   .income-remove { background: var(--panel); color: var(--text); border: 1px solid var(--border); padding: 8px 10px; }
   .income-remove:hover { background: var(--border); }
   .income-empty { color: var(--muted); font-size: 12px; padding: 4px 0 10px; }
+  .bill-list { display: grid; gap: 10px; }
+  .editable-bill-name { width: min(230px, 46vw); font-weight: 600; }
+  .bill-list .input-header { align-items: center; }
+  .bill-list .bill-options { flex-wrap: wrap; justify-content: flex-end; }
+  .bill-list .remove-btn { margin-left: 2px; }
+  .bill-help { color: var(--muted); font-size: 11px; margin-top: -4px; margin-bottom: 6px; }
+  @media (max-width: 700px) { .editable-bill-name { width: 100%; } .bill-list .input-header { align-items: flex-start; flex-direction: column; } .bill-list .bill-options { justify-content: flex-start; } }
   @media (max-width: 700px) { .income-row-grid { grid-template-columns: 1fr 1fr; } .income-remove { grid-column: 1 / -1; width: 100%; } }
 
   /* Main Widget Styles */
@@ -1338,102 +1345,21 @@
 <span id="total-income-display">$0.00</span>
 </div>
 </div>
-<div class="section">
-<div class="section-title title-blue">Fixed Bills</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="🚗" data-bill-id="bill-car" data-bill-name="Car Payment">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">🚗</span>Car Payment</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="Car Payment due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
+<div class="section" id="fixed-bills-section">
+<div class="section-title title-blue">
+  <span>Fixed Bills</span>
+  <button type="button" class="add-income-btn" onclick="addBillRow('fixed')">+ Add Fixed Bill</button>
 </div>
+<div id="fixed-bills-list" class="bill-list"></div>
+<div class="income-empty" id="fixed-bills-empty">No fixed bills yet. Add one above, or keep the preset bills below as a starting point.</div>
 </div>
-<div class="controls-row">
-<input class="sync-slider" max="1000" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-car" min="0" step="0.01" type="number" value="0.00"/>
+<div class="section" id="variable-bills-section">
+<div class="section-title title-green">
+  <span>Variable &amp; Subscriptions</span>
+  <button type="button" class="add-income-btn" onclick="addBillRow('variable')">+ Add Variable / Subscription</button>
 </div>
-</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="🛡️" data-bill-id="bill-insurance" data-bill-name="Car Insurance">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">🛡️</span>Car Insurance</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="Car Insurance due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
-</div>
-</div>
-<div class="controls-row">
-<input class="sync-slider" max="300" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-insurance" min="0" step="0.01" type="number" value="0.00"/>
-</div>
-</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="🎓" data-bill-id="bill-student" data-bill-name="Student Loan">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">🎓</span>Student Loan</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="Student Loan due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
-</div>
-</div>
-<div class="controls-row">
-<input class="sync-slider" max="800" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-student" min="0" step="0.01" type="number" value="0.00"/>
-</div>
-</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="📱" data-bill-id="bill-phone" data-bill-name="Phone Bill">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">📱</span>Phone Bill</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="Phone Bill due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
-</div>
-</div>
-<div class="controls-row">
-<input class="sync-slider" max="200" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-phone" min="0" step="0.01" type="number" value="0.00"/>
-</div>
-</div>
-</div>
-<div class="section">
-<div class="section-title title-green">Variable &amp; Subscriptions</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="⛽" data-bill-id="bill-gas" data-bill-name="Gas">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">⛽</span>Gas</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="Gas due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
-</div>
-</div>
-<div class="controls-row">
-<input class="sync-slider" max="400" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-gas" min="0" step="0.01" type="number" value="0.00"/>
-</div>
-</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="💳" data-bill-id="bill-self" data-bill-name="SELF (Credit Builder)">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">💳</span>SELF (Credit Builder)</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="SELF due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
-</div>
-</div>
-<div class="controls-row">
-<input class="sync-slider" max="100" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-self" min="0" step="0.01" type="number" value="0.00"/>
-</div>
-</div>
-<div class="input-group bill-item fixed-bill-item" data-bill-icon="🎵" data-bill-id="bill-spotify" data-bill-name="Spotify">
-<div class="input-header">
-<span class="input-label bill-label"><span class="bill-icon">🎵</span>Spotify</span>
-<div class="bill-options">
-<span class="due-label">Due day</span>
-<input aria-label="Spotify due day" class="due-day-input" max="31" min="1" placeholder="1-31" type="number"/>
-</div>
-</div>
-<div class="controls-row">
-<input class="sync-slider" max="50" min="0" step="0.01" type="range" value="0"/>
-<input class="sync-num bill-amount fixed-bill" id="bill-spotify" min="0" step="0.01" type="number" value="0.00"/>
-</div>
-</div>
+<div id="variable-bills-list" class="bill-list"></div>
+<div class="income-empty" id="variable-bills-empty">No variable bills or subscriptions yet. Add one above.</div>
 </div>
 <div class="section" id="extra-expenses-section">
 <div class="section-title title-orange">Extra Expenses</div>
@@ -2454,6 +2380,7 @@
     loadDarkMode();
     loadCalendarState();
     loadSidebar();
+    initializeBillPresets();
     calculateBudget();
     renderCalendar();
     scheduleDailyCalendarRefresh();
@@ -2870,6 +2797,128 @@
     if (!rows || !rows.length) calculateBudget();
   }
 
+  // Editable bill presets + dynamic bill rows
+  const BILL_PRESETS = {
+    fixed: [
+      { id: 'bill-car', name: 'Car Payment', icon: '🚗', amount: 0 },
+      { id: 'bill-insurance', name: 'Car Insurance', icon: '🛡️', amount: 0 },
+      { id: 'bill-student', name: 'Student Loan', icon: '🎓', amount: 0 },
+      { id: 'bill-phone', name: 'Phone Bill', icon: '📱', amount: 0 }
+    ],
+    variable: [
+      { id: 'bill-gas', name: 'Gas', icon: '⛽', amount: 0 },
+      { id: 'bill-self', name: 'SELF (Credit Builder)', icon: '💳', amount: 0 },
+      { id: 'bill-spotify', name: 'Spotify', icon: '🎵', amount: 0 }
+    ]
+  };
+
+  let billCounter = 0;
+
+  function billListForType(type) {
+    return document.getElementById(type === 'fixed' ? 'fixed-bills-list' : 'variable-bills-list');
+  }
+
+  function updateBillEmptyState(type) {
+    const list = billListForType(type);
+    const empty = document.getElementById(type === 'fixed' ? 'fixed-bills-empty' : 'variable-bills-empty');
+    if (list && empty) empty.style.display = list.children.length ? 'none' : 'block';
+  }
+
+  function addBillRow(type, data = {}, refresh = true) {
+    const container = billListForType(type);
+    if (!container) return null;
+    const amount = Number(data.amount) || 0;
+    const icon = data.icon || '💰';
+    const name = data.name || (type === 'fixed' ? 'New Fixed Bill' : 'New Subscription');
+    const dueDay = data.dueDay || '';
+    const id = data.id || `bill-custom-${++billCounter}`;
+    const max = Math.max(1000, Math.ceil(Math.max(amount, 100) * 2 / 100) * 100);
+
+    const billDiv = document.createElement('div');
+    billDiv.className = 'input-group bill-item editable-bill-item';
+    billDiv.dataset.billId = id;
+    billDiv.dataset.billType = type;
+    billDiv.dataset.billName = name;
+    billDiv.dataset.billIcon = icon;
+    billDiv.innerHTML = `
+      <div class="input-header">
+        <span class="input-label bill-label">
+          <span class="bill-icon">${escapeHtml(icon)}</span>
+          <input class="editable-bill-name" type="text" value="${escapeHtml(name)}" aria-label="${escapeHtml(name)} name">
+        </span>
+        <div class="bill-options">
+          <select class="bill-icon-select" aria-label="${escapeHtml(name)} icon">
+            ${getIconOptions(icon)}
+          </select>
+          <span class="due-label">Due day</span>
+          <input type="number" class="due-day-input" min="1" max="31" placeholder="1-31" value="${escapeHtml(dueDay)}" aria-label="${escapeHtml(name)} due day">
+          <button type="button" class="remove-btn">Remove</button>
+        </div>
+      </div>
+      <div class="controls-row">
+        <input type="range" class="sync-slider" min="0" max="${max}" step="0.01" value="${amount.toFixed(2)}">
+        <input type="number" class="sync-num bill-amount" min="0" step="0.01" value="${amount.toFixed(2)}">
+      </div>
+    `;
+
+    const nameInput = billDiv.querySelector('.editable-bill-name');
+    const iconSelect = billDiv.querySelector('.bill-icon-select');
+    const iconEl = billDiv.querySelector('.bill-icon');
+    const dueInput = billDiv.querySelector('.due-day-input');
+    const removeBtn = billDiv.querySelector('.remove-btn');
+
+    const refreshBill = () => {
+      billDiv.dataset.billName = nameInput.value.trim() || (type === 'fixed' ? 'Fixed Bill' : 'Subscription');
+      nameInput.value = billDiv.dataset.billName;
+      calculateBudget();
+      renderCalendar();
+      updateAllWidgets();
+    };
+
+    nameInput.addEventListener('input', () => {
+      billDiv.dataset.billName = nameInput.value.trim() || (type === 'fixed' ? 'Fixed Bill' : 'Subscription');
+      updateAllWidgets();
+      renderCalendar();
+    });
+    iconSelect.addEventListener('change', e => {
+      billDiv.dataset.billIcon = e.target.value;
+      iconEl.textContent = e.target.value;
+      renderCalendar();
+      updateAllWidgets();
+    });
+    dueInput.addEventListener('input', () => { renderCalendar(); updateAllWidgets(); });
+    removeBtn.addEventListener('click', () => {
+      billDiv.remove();
+      updateBillEmptyState(type);
+      calculateBudget();
+      renderCalendar();
+      updateAllWidgets();
+    });
+
+    container.appendChild(billDiv);
+    attachSyncEvents(billDiv.querySelector('.sync-slider'), billDiv.querySelector('.sync-num'));
+    billDiv.querySelector('.sync-num').addEventListener('input', e => {
+      const value = Number(e.target.value) || 0;
+      const slider = billDiv.querySelector('.sync-slider');
+      slider.max = Math.max(Number(slider.max) || 1000, Math.ceil(Math.max(value, 100) * 2 / 100) * 100);
+    });
+    refreshSliderFills();
+    updateBillEmptyState(type);
+    if (refresh) refreshBill();
+    return billDiv;
+  }
+
+  function initializeBillPresets() {
+    const fixed = document.getElementById('fixed-bills-list');
+    const variable = document.getElementById('variable-bills-list');
+    if (fixed) fixed.innerHTML = '';
+    if (variable) variable.innerHTML = '';
+    BILL_PRESETS.fixed.forEach(item => addBillRow('fixed', item, false));
+    BILL_PRESETS.variable.forEach(item => addBillRow('variable', item, false));
+    updateBillEmptyState('fixed');
+    updateBillEmptyState('variable');
+  }
+
   // Dynamic Expenses functions
   function addExtraExpenseFromInput() {
     const nameInput = document.getElementById('new-expense-name');
@@ -2878,9 +2927,8 @@
     const amount = parseFloat(amountInput.value) || 0;
 
     if (!name) return alert("Please enter an expense name.");
-    
+
     createExtraExpenseUI(name, amount);
-    
     nameInput.value = '';
     amountInput.value = '';
     calculateBudget();
@@ -2897,14 +2945,14 @@
     expenseDiv.dataset.billIcon = icon;
     expenseDiv.innerHTML = `
       <div class="input-header">
-        <span class="input-label bill-label"><span class="bill-icon">${icon}</span><span class="dynamic-expense-name"></span></span>
+        <span class="input-label bill-label"><span class="bill-icon">${escapeHtml(icon)}</span><span class="dynamic-expense-name"></span></span>
         <div class="bill-options">
           <select class="bill-icon-select" aria-label="${escapeHtml(name)} icon">
             ${getIconOptions(icon)}
           </select>
           <span class="due-label">Due day</span>
-          <input type="number" class="due-day-input" min="1" max="31" placeholder="1-31" value="${dueDay}" aria-label="${escapeHtml(name)} due day">
-          <button class="remove-btn" onclick="this.closest('.input-group').remove(); calculateBudget(); renderCalendar();">Remove</button>
+          <input type="number" class="due-day-input" min="1" max="31" placeholder="1-31" value="${escapeHtml(dueDay)}" aria-label="${escapeHtml(name)} due day">
+          <button class="remove-btn" type="button">Remove</button>
         </div>
       </div>
       <div class="controls-row">
@@ -2921,6 +2969,9 @@
     attachSyncEvents(newSlider, newNum);
     refreshSliderFills();
 
+    expenseDiv.querySelector('.remove-btn').addEventListener('click', () => {
+      expenseDiv.remove(); calculateBudget(); renderCalendar(); updateAllWidgets();
+    });
     expenseDiv.querySelector('.due-day-input').addEventListener('input', () => { renderCalendar(); updateAllWidgets(); });
     expenseDiv.querySelector('.bill-icon-select').addEventListener('change', (e) => {
       expenseDiv.dataset.billIcon = e.target.value;
@@ -2945,34 +2996,35 @@
   }
 
   // --- Save / Load Logic ---
+  function collectBillRows(type) {
+    const container = billListForType(type);
+    if (!container) return [];
+    return [...container.querySelectorAll('.editable-bill-item')].map(el => ({
+      id: el.dataset.billId || '',
+      name: el.querySelector('.editable-bill-name')?.value.trim() || el.dataset.billName || 'Bill',
+      amount: parseFloat(el.querySelector('.bill-amount')?.value) || 0,
+      dueDay: el.querySelector('.due-day-input')?.value || '',
+      icon: el.dataset.billIcon || el.querySelector('.bill-icon')?.textContent || '💰'
+    }));
+  }
+
   function saveSheet() {
     const saveName = document.getElementById('save-name-input').value.trim();
     if (!saveName) return alert("Please enter a Month/Year to save.");
 
     const data = {
       incomes: getIncomeRowsData(),
-      fixedBills: {},
+      fixedBills: collectBillRows('fixed'),
+      variableBills: collectBillRows('variable'),
       extraBills: []
     };
 
-    // Save Fixed Bills, including due day and icon.
-    document.querySelectorAll('.fixed-bill-item').forEach(el => {
-      const amountEl = el.querySelector('.fixed-bill');
-      const dueEl = el.querySelector('.due-day-input');
-      data.fixedBills[el.dataset.billId] = {
-        amount: amountEl.value,
-        dueDay: dueEl.value || "",
-        icon: el.dataset.billIcon || el.querySelector('.bill-icon')?.textContent || "💰"
-      };
-    });
-
-    // Save Extra Expenses, including due day and icon.
     document.querySelectorAll('.dynamic-expense-item').forEach(el => {
       data.extraBills.push({
         name: el.dataset.name,
         amount: parseFloat(el.querySelector('.extra-bill').value) || 0,
-        dueDay: el.querySelector('.due-day-input')?.value || "",
-        icon: el.dataset.billIcon || "💰"
+        dueDay: el.querySelector('.due-day-input')?.value || '',
+        icon: el.dataset.billIcon || '💰'
       });
     });
 
@@ -2980,54 +3032,53 @@
     loadSidebar();
   }
 
+  function loadLegacyBillRows(fixedBills) {
+    const fixedIds = ['bill-car','bill-insurance','bill-student','bill-phone'];
+    const variableIds = ['bill-gas','bill-self','bill-spotify'];
+    const rows = { fixed: [], variable: [] };
+    const presetsById = new Map([...BILL_PRESETS.fixed, ...BILL_PRESETS.variable].map(p => [p.id, p]));
+    for (const [id, savedValue] of Object.entries(fixedBills || {})) {
+      const preset = presetsById.get(id);
+      if (!preset) continue;
+      const obj = typeof savedValue === 'object' ? savedValue : { amount: savedValue };
+      rows[fixedIds.includes(id) ? 'fixed' : 'variable'].push({
+        id, name: preset.name, amount: parseFloat(obj.amount) || 0, dueDay: obj.dueDay || '', icon: obj.icon || preset.icon
+      });
+    }
+    return rows;
+  }
+
   function loadSheet(saveName) {
     const rawData = localStorage.getItem(STORAGE_PREFIX + saveName);
     if (!rawData) return;
 
     const data = JSON.parse(rawData);
-
     document.getElementById('save-name-input').value = saveName;
-
     loadIncomeRows(data.incomes || legacyIncomeRows(data));
 
-    // Load Fixed Bills. Old saved sheets that only stored a number remain compatible.
-    for (const [id, savedValue] of Object.entries(data.fixedBills || {})) {
-      const el = document.getElementById(id);
-      if (!el) continue;
+    const legacy = loadLegacyBillRows(data.fixedBills);
+    const fixedRows = Array.isArray(data.fixedBills) ? data.fixedBills : legacy.fixed;
+    const variableRows = Array.isArray(data.variableBills) ? data.variableBills : legacy.variable;
 
-      const amount = typeof savedValue === "object" ? savedValue.amount : savedValue;
-      const dueDay = typeof savedValue === "object" ? (savedValue.dueDay || "") : "";
-      const icon = typeof savedValue === "object" ? (savedValue.icon || "") : "";
-
-      el.value = parseFloat(amount).toFixed(2);
-
-      const slider = el.previousElementSibling;
-      if (slider && slider.classList.contains('sync-slider')) {
-        slider.value = el.value;
-      }
-
-      const billItem = el.closest('.fixed-bill-item');
-      if (billItem) {
-        const dueEl = billItem.querySelector('.due-day-input');
-        if (dueEl) dueEl.value = dueDay;
-
-        if (icon) {
-          billItem.dataset.billIcon = icon;
-          const iconEl = billItem.querySelector('.bill-icon');
-          if (iconEl) iconEl.textContent = icon;
-        }
-      }
-    }
+    const fixed = document.getElementById('fixed-bills-list');
+    const variable = document.getElementById('variable-bills-list');
+    if (fixed) fixed.innerHTML = '';
+    if (variable) variable.innerHTML = '';
+    (fixedRows || []).forEach(item => addBillRow('fixed', item, false));
+    (variableRows || []).forEach(item => addBillRow('variable', item, false));
+    updateBillEmptyState('fixed');
+    updateBillEmptyState('variable');
 
     const container = document.getElementById('dynamic-expenses-container');
     container.innerHTML = '';
     (data.extraBills || []).forEach(item => {
-      createExtraExpenseUI(item.name, item.amount, item.dueDay || "", item.icon || "💰");
+      createExtraExpenseUI(item.name, item.amount, item.dueDay || '', item.icon || '💰');
     });
 
     calculateBudget();
     renderCalendar();
     updateAllWidgets();
+    refreshSliderFills();
   }
 
   function deleteSheet(saveName, event) {
